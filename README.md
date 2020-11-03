@@ -17,7 +17,7 @@ From realsense-ros:
 
 From ros_lebot:
 
-- [x]  /wheel_values
+- [x]  /move_somewhere
 - [x] /ball_distance
 - [x]  /ball_location
 - [x]  /basket_location
@@ -33,9 +33,10 @@ From ros_lebot:
 - [x]  /depth_ball
 - [x]  /find_ball
 
+#### Notes.
 
-
-
-
-
-
+* If we use /camera/extrinsics/depth_to_color, then maybe it's faster? But problems would arise with the balls. Apply only with basket mask?
+* No game logic applied yet, just sensor.
+* Need external calculation for game movement (Do calculation, then publish to wheel_values).
+* No CMAKE yet.
+* 
