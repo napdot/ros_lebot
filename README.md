@@ -4,31 +4,34 @@
 
 #### Packages
 
-​	1) realsense_ros
+​	1) realsense-ros
 ​	2) ros_lebot
 ​	3) cv_bridge
 
 #### Topics
 
-​	From realsense_ros:
-​		._ /depth
-​		._ /image
+From realsense-ros:
 
-​	From ros_lebot:
-​		._ /wheel_values [x]
-​		._ /ball_distance [x]
-​		._ /ball_location [x]
-​		._ /basket_location [x]
-​		._ /basket_distance []
-​		._ /depth_and_ball_location []
+- [x] /camera/depth/image_rect_raw
+- [x] /camera/color/image_raw
+
+From ros_lebot:
+
+- [x]  /wheel_values
+- [x] /ball_distance
+- [x]  /ball_location
+- [x]  /basket_location
+- [ ] /basket_distance
+- [ ] /depth_and_ball_location
 
 #### Nodes
 
-​	From ros_lebot:
-​		._ /find_basket [x]
-​		._ /vruum [x]
-​		._ /depth_ball [x]
-​		._ /find_ball [x]
+From ros_lebot:
+
+- [x] /find_basket
+- [x]  /vruum
+- [x]  /depth_ball
+- [x]  /find_ball
 
 
 
