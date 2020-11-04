@@ -12,26 +12,22 @@
 
 From realsense-ros:
 
-- [x] /camera/depth/image_rect_raw
+- [x] /camera/aligned_depth_to_color/image_raw
 - [x] /camera/color/image_raw
 
 From ros_lebot:
 
 - [x]  /move_somewhere
-- [x] /ball_distance
-- [x]  /ball_location
-- [x]  /basket_location
-- [ ] /basket_distance
-- [ ] /depth_and_ball_location
+- [x] /ball
+- [ ]  /basket
 
 #### Nodes
 
 From ros_lebot:
 
-- [x] /find_basket
 - [x]  /vruum
-- [x]  /depth_ball
-- [x]  /find_ball
+- [ ]  /basket_calc
+- [x]  /ball_calc
 
 #### Notes.
 
@@ -39,4 +35,3 @@ From ros_lebot:
 * No game logic applied yet, just sensor.
 * Need external calculation for game movement (Do calculation, then publish to wheel_values).
 * No CMAKE yet.
-* 
