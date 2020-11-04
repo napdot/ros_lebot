@@ -2,6 +2,7 @@ import rospy
 import numpy as np
 from additional_msgs.msg import Depth_BallLocation
 from std_msgs.msg import Uint8
+sensor_msgs::image_encodings::TYPE_16UC1
 
 
 def depth_to_ball(array, ball):
