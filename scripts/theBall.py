@@ -42,7 +42,7 @@ class Ball:
         msg.d = self.ball_distance
         return msg
 
-    def get_ball_location(self,frame):
+    def get_ball_location(self, frame):
         radius_min = 10
         radius_max = 50
         kernel = np.ones((3, 3), np.uint8)

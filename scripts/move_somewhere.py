@@ -9,23 +9,17 @@ class Move:
                                  bytesize=serial.EIGHTBITS,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
 
+        wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback)
+
     def move_to(self, w1, w2, w3):
         sot = ("sd:{0}:{1}:{2}\n".format(w1, w2, w3))
         self.ser.write(sot.encode('utf-8'))
 
-
-def wheel_callback(data):
-    global w1, w2, w3
-    w1 = data.w1
-    w2 = data.w2
-    w3 = data.w3
-    meMove.move_to(w1, w2, w3)
+    def wheel_callback(self, data):
+        self.move_to(data.w1, data.w2, data.w3)
 
 
 if __name__ == '__main__':
-    global w1, w2, w3
-    meMove = Move
     rospy.init_node('/vruum', anonymous=False)
-    wheel_sub = rospy.Subscriber("/wheel_values", Wheel, wheel_callback)
+    Move()
     rospy.spin()
-
