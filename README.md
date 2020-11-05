@@ -7,6 +7,7 @@
 ​	1) realsense-ros
 ​	2) ros_lebot
 ​	3) cv_bridge
+​    4) ds4_driver
 
 #### Topics
 
@@ -19,19 +20,23 @@ From ros_lebot:
 
 - [x]  /move_somewhere
 - [x] /ball
-- [ ]  /basket
+- [x]  /basket
 
 #### Nodes
 
 From ros_lebot:
 
 - [x]  /vruum
-- [ ]  /basket_calc
+- [x]  /basket_calc
 - [x]  /ball_calc
 
-#### Notes.
+#### Additional scripts
 
-* If we use /camera/extrinsics/depth_to_color, then maybe it's faster? But problems would arise with the balls. Apply only with basket mask?
-* No game logic applied yet, just sensor.
-* Need external calculation for game movement (Do calculation, then publish to wheel_values).
-* No CMAKE yet.
+- [ ] wheel_calc_ball_basket_orient.py ---> Publish to move_somewhere.
+
+#### Missing.
+
+* Game logic
+* Camera parameter script
+* CMAKE file.
+* DS4_driver.
