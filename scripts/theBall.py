@@ -17,6 +17,7 @@ class Ball:
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
         self.ball_depth_location_pub = rospy.Publisher("/ball", Depth_BallLocation)
         self.ball_depth_location_pub.pub(self.ball_message)
+        self.mask = None
 
     def get_my_image_callback(self, data):
         bridge_img = CvBridge()
@@ -29,11 +30,12 @@ class Ball:
         self.depth_to_ball(depth_image)
 
     def depth_to_ball(self, depth_img):
-        y1, y2, x1, x2 = (self.ball_location[1] - self.ball_location[2]),\
-                         (self.ball_location[1] + self.ball_location[2]),\
-                         (self.ball_location[0] - self.ball_location[2]),\
-                         (self.ball_location[0] + self.ball_location[2])
-        self.ball_distance = np.mean(depth_img[y1:y2, x1:x2])
+        # y1, y2, x1, x2 = (self.ball_location[1] - self.ball_location[2]),\
+        #                  (self.ball_location[1] + self.ball_location[2]),\
+        #                  (self.ball_location[0] - self.ball_location[2]),\
+        #                  (self.ball_location[0] + self.ball_location[2])
+        selected_depth_array = depth_img * self.mask
+        self.ball_distance = np.mean(selected_depth_array)
 
     def ball_message(self):
         msg = Depth_BallLocation()
@@ -48,8 +50,8 @@ class Ball:
         kernel = np.ones((3, 3), np.uint8)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        self.mask = cv2.inRange(hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
+        self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, kernel)
 
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
                                 cv2.CHAIN_APPROX_SIMPLE)[-2]
