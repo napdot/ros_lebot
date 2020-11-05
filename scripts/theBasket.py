@@ -41,6 +41,7 @@ class Basket:
         msg.x = self.basket_location[0]
         msg.y = self.basket_location[1]
         msg.d = self.basket_distance
+        return msg
 
     def get_basket_location(self, frame, color):
         if color == 'red':
