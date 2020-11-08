@@ -2,7 +2,7 @@ import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import numpy as np
-from additional_msgs.msg import Depth_BallLocation
+from msg.msg import Depth_BallLocation
 import cv2
 import json
 

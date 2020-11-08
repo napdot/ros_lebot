@@ -1,8 +1,8 @@
 import rospy
 import smach
 import smach_ros
-from additional_msgs.msg import Depth_BallLocation
-from additional_msgs.msg import Wheel
+from msg.msg import Depth_BallLocation
+from msg.msg import Wheel
 
 from srv.srv import ball_srv, ball_srvResponse
 
