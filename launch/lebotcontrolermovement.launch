@@ -1,0 +1,14 @@
+<launch>
+    <node
+        pkg="ros_lebot"
+        type="myControllerInput.py"
+        name="ControllerToRobot" />
+    <node
+        pkg="ros_lebo"
+        type=""
+
+    <include file="$(find ds4_driver)/launch/demo.launch" >
+    <arg name="addr" value="$(arg addr)" />
+    <arg name="use_standard_msgs" value="true" />
+    </include>
+</launch>
