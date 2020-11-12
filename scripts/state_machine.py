@@ -199,14 +199,36 @@ def main():
 
 
     # State machine
-    sm = smach.StateMachine(outcomes=['exit', 'pause'])
+    sm = smach.StateMachine(outcomes=['OFF', 'pause'])
     with sm:
-        smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'FINDBALL'})
+        # Wait for signal to start or Off somehow
+        smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'READY', 'goOFF': "OFF"})
+        # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
+        # Check if Ball and Basket, if yes, then go to SET. If noBall, FINDBALL. If no basket, GETTOBALL (NOTE: noBallTakes priority regardless if basket or noBasket.)
+        smach.StateMachine.add('READY', READY(), transition={'noBall': 'FINDBALL', 'noBasket': "GETTOBALL", 'isReady' : 'SET'})
+        # Rotate to find ball, once ball is found then go to GETTOBALL
+        smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
+        # Once we get to Ball check if there's a basket. If there is, then READY. If no basket, ROTATEAROUNDBALL
+        smach.StateMachine.add('GETTOBALL', STANDBY(), transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
+        # Rotate around ball until basketFound and move to READY
+        smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(), transition={'basketFound': 'READY'})
+        # In set we move to correct direction and distance from ball. Once set up, we go to GO.
+        smach.StateMachine.add('SET', SET(), transition={'letsGo': 'GO'})
+        # In Go we initiate thrower motor and move forward. If no ball in thrower visual range, then we can assume we have thrown and go to READY.
+        smach.StateMachine.add('GO', GO(), transition={'haveThrow': 'READY'})
+
+
+
+
+
+
+
+
+
+        smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'FINDBALL', 'goOFF': "OFF"})
         smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'BALLBASKET', 'noBall': 'NOBALL'})
         smach.StateMachine.add('NOBALL', NOBALL(), transitions={'ball': 'FINDBALL', 'noball': 'STANDY'})
-        smach.StateMachine.add('BALLBASKET', BALLBASKET(), transition={'readyToThrow': 'THROW', 'ballNotInThrower': 'FINDBALL'})
-        smach.StateMachine.add('GETTOBALLWITHBASKET', GETTOBALLWITHBASKET(), transition={'readyToThrow': 'THROW', 'noBasket': 'FINDBALL'})
-        smach.StateMachine.add('OFF', OFF())
+        smach.StateMachine.add('GETTOBALLWITHBASKET', GETTOBALLWITHBASKET(), transition={'readyToThrow': 'THROW', 'noBasket': 'ROTAROUNDBALL', 'noBall': 'FINDBALL'})
         smach.StateMachine.add('PAUSE', PAUSE())
 
     outcome = sm.execute()
