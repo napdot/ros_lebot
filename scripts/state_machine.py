@@ -50,11 +50,33 @@ class FINDBALL(smach.State):
             self.msg.w1, self.msg.w2, self.msg.w3 = spd, -spd, -spd
             self.move.publish(self.msg)
             return False
-        elif (center_point + ball_freedom) < x:     # Ball isright
+        elif (center_point + ball_freedom) < x:     # Ball is right
             self.msg.w1, self.msg.w2, self.msg.w3 = -spd, spd, spd
             self.move.publish(self.msg)
             return False
 
+class GETTOBALLWITHBASKET(smach.State):
+    def __int__(self):
+        smach.State.__init__(self, outcomes=['ballFound', 'noBallFound'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+
+    def execute(self):  # execute(self, userdata)
+        x, y, d = self.findball_service()
+        if x != 0 and y != 0:
+            return 'ballFound'
+
+        if self.counter < 100:
+            if self.negRot:
+                self.rotate_to(1, 1, 1)
+                self.counter = self.counter + 1
+                if self.counter == 50:
+                    negRot = False
+            else:
+                self.rotate_to(-1, -1, -1)
+                self.counter = self.counter + 1
+        else:
+            print('100 iteration. ball no found')
+            return 'noBallFound'
 
 class NOBALL(smach.State):
     def __int__(self):
@@ -177,12 +199,13 @@ def main():
 
 
     # State machine
-    sm = smach.StateMachine(outcomes=['game', 'exit', 'pause'])
+    sm = smach.StateMachine(outcomes=['exit', 'pause'])
     with sm:
         smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'FINDBALL'})
-        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'BALLBASKET', 'noball': 'NOBALL'})
+        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'BALLBASKET', 'noBall': 'NOBALL'})
         smach.StateMachine.add('NOBALL', NOBALL(), transitions={'ball': 'FINDBALL', 'noball': 'STANDY'})
         smach.StateMachine.add('BALLBASKET', BALLBASKET(), transition={'readyToThrow': 'THROW', 'ballNotInThrower': 'FINDBALL'})
+        smach.StateMachine.add('GETTOBALLWITHBASKET', GETTOBALLWITHBASKET(), transition={'readyToThrow': 'THROW', 'noBasket': 'FINDBALL'})
         smach.StateMachine.add('OFF', OFF())
         smach.StateMachine.add('PAUSE', PAUSE())
 
