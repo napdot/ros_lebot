@@ -43,7 +43,16 @@ class OFF(smach.State):
 
     def execute(self, userdata):
         print('Going off')
-        exit()
+        rospy.signal_shutdown('OFF state and exit.')
+
+
+class PAUSE(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['exit'])
+
+    def execute(self, userdata):
+        rospy.Subscriber('/refereesignal')
+
 
 
 
@@ -54,12 +63,13 @@ def main():
     rospy.wait_for_service('/basket_service')
 
     # State machine
-    sm = smach.StateMachine(outcomes=['game', 'exit'])
+    sm = smach.StateMachine(outcomes=['game', 'exit', 'pause'])
     with sm:
-        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'OFF', 'noball': 'OFF'})
-        smach.StateMachine.add('FINDBASKET', FINDBASKET(), transition = {'nobasket': 'OFF', 'basket' : 'OFF'})
-        smach.StateMachine.add('STANDBY', STANDBY(), transition = {'start':'FINDBASKET'})
+        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'ball_basket', 'referee': 'PAUSE'})
+        smach.StateMachine.add('FINDBASKET', FINDBASKET(), transition = {'nobasket': 'OFF', 'basket': 'OFF', 'referee': 'PAUSE'})
+        smach.StateMachine.add('STANDBY', STANDBY(), transition = {'start': 'FINDBALL'})
         smach.StateMachine.add('OFF', OFF())
+        smach.StateMachine.add('PAUSE', PAUSE())
 
     outcome = sm.execute()
 
