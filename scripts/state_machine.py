@@ -3,7 +3,6 @@ import smach
 import smach_ros
 from msg.msg import Depth_BallLocation
 from msg.msg import Wheel
-
 from srv.srv import ball_srv, ball_srvResponse
 
 
@@ -29,7 +28,7 @@ class FINDBALL(smach.State):
 
         if self.isNearBall:
             print('Oriented and near')
-            # return 'ball'         Change state.
+            return 'ball'
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
@@ -77,6 +76,10 @@ class NOBALL(smach.State):
                     negRot = False
             else:
                 self.rotate_to(-1, -1, -1)
+                self.counter = self.counter + 1
+        else:
+            print('100 iteration. ball no found')
+            return 'noBallFound'
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
@@ -90,7 +93,7 @@ class NOBALL(smach.State):
 
 class STANDBY(smach.State):
     def __int__(self):
-        smach.State.__init__(self, outcomes=['start'])
+        smach.State.__init__(self, outcomes=['toStart', 'toOFF'])
 
     def execute(self, userdata):
         return 'start'
@@ -112,18 +115,39 @@ class STANDBY(smach.State):
         smach.State.__init__(self, outcomes=['start'])
 
     def execute(self, userdata):
+        print('Standby')
+        print('Going to start...')
         return 'start'
 
 
-class FINDBASKET(smach.State):
+class BALLBASKET(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['basket', 'nobasket'])
+        smach.State.__init__(self, outcomes=['basket', 'nobasket', 'ballNotInThrower'])
+        self.
 
     def execute(self):
+        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
+        x, y, d = self.findball_service()
 
-        print('State: FINDBASKET')
+        isBallInThrower = self.checkBallinThrower(x, y, d)
+        if not isBallInThrower:
+            return 'ballNotInThrower'
 
-        return 'basket'
+
+
+
+    def findball_service(self):
+        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
+        x, y, d = ball_service
+        return x, y, d
+
+
+    def checkBallinThrower(self, x, y, d):
+        if:
+            return True
+        else:
+            return False
+
 
 
 class OFF(smach.State):
@@ -155,10 +179,10 @@ def main():
     # State machine
     sm = smach.StateMachine(outcomes=['game', 'exit', 'pause'])
     with sm:
-        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'ball_basket', 'referee': 'PAUSE'})
-        smach.StateMachine.add('FINDBASKET', FINDBASKET(),
-                               transition={'nobasket': 'OFF', 'basket': 'OFF', 'referee': 'PAUSE'})
         smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'FINDBALL'})
+        smach.StateMachine.add('FINDBALL', FINDBALL(), transitions={'ball': 'BALLBASKET', 'noball': 'NOBALL'})
+        smach.StateMachine.add('NOBALL', NOBALL(), transitions={'ball': 'FINDBALL', 'noball': 'STANDY'})
+        smach.StateMachine.add('BALLBASKET', BALLBASKET(), transition={'readyToThrow': 'THROW', 'ballNotInThrower': 'FINDBALL'})
         smach.StateMachine.add('OFF', OFF())
         smach.StateMachine.add('PAUSE', PAUSE())
 
