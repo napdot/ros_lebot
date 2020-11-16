@@ -154,7 +154,7 @@ class GO(smach.State):
         if isBallInThrower:
             self.msg.w1, self.msg.w2, self.msg.w3 = spd, -spd, 0    # maybe make formula for straight movement.
         if not isBallInThrower:
-            return 'Done'
+            return 'haveThrow'
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
@@ -162,7 +162,7 @@ class GO(smach.State):
         return x, y, d
 
     def checkBallinThrower(self, x, y, d):
-        if 400 < x < 600 and 700 < y < 900 and d < 10:
+        if 400 < x < 600 and 700 < y < 900 and d < 10:      # check correct vals once camera is set up
             return True
         else:
             return False
@@ -188,20 +188,15 @@ class PAUSE(smach.State):
 
 class READY(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['noBall', 'noBasket', 'isReady'])
+        smach.State.__init__(self, outcomes=['noBall', 'isReady'])
 
     def execute(self):
         bx, by, bd = self.findball_service()
         if bx == 0 and by == 0 or bd == 0:
             return 'nobBall'
-
         gx, gy, gd = self.findbasket_service()
-        if gx == 0 and gy == 0 or gd == 0:
-            return 'noBasket'
-
-        else:
+        if gx != 0 and gy != 0 or gd != 0:
             return 'isReady'
-
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
@@ -222,32 +217,38 @@ def main():
     rospy.wait_for_service("/ball_service")
     rospy.wait_for_service('/basket_service')
 
-
     # State machine
     sm = smach.StateMachine(outcomes=['OFF', 'pause'])
     with sm:
         # Wait for signal to start or Off somehow
         smach.StateMachine.add('STANDBY', STANDBY(),
                                transition={'start': 'READY', 'goOFF': "OFF"})
+
         # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
         # Check if Ball and Basket, if yes, then go to SET. If noBall, FINDBALL. If no basket, GETTOBALL
         # (NOTE: noBallTakes priority regardless if basket or noBasket.)
         smach.StateMachine.add('READY', READY(),
-                               transition={'noBall': 'FINDBALL', 'noBasket': "GETTOBALL", 'isReady' : 'SET'})
+                               transition={'noBall': 'FINDBALL', 'isReady': 'SET'})
+
         # Rotate to find ball, once ball is found then go to GETTOBALL
         smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
+
         # State for approaching ball
         smach.StateMachine.add('GETTOBALL', GETTOBALL(),
                                transition={'atBall': 'IMATBALL'})
+
         # Once we get to Ball check if there's a basket. If there is, then READY. If no basket, ROTATEAROUNDBALL
         smach.StateMachine.add('IMATBALL', STANDBY(),
                                transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
+
         # Rotate around ball until basketFound and move to READY
         smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(),
                                transition={'basketFound': 'READY'})
+
         # In set we move to correct direction and distance from ball. Once set up, we go to GO.
         smach.StateMachine.add('SET', SET(),
                                transition={'letsGo': 'GO'})
+
         # In Go we initiate thrower motor and move forward.
         # If no ball in thrower visual range, then we can assume we have thrown and go to READY.
         smach.StateMachine.add('GO', GO(),
