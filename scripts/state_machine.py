@@ -9,6 +9,8 @@ from scripts.movement.findBall import findBall as fball
 from scripts.movement.findBasket import findBasket as fbasket
 from scripts.movement.approachBall import approachBall
 from scripts.movement.approachThrow import approachThrow
+from scripts.transfCamCoord import transfCamCoord as tcc
+from scripts.calcAngle import calc_angle
 
 
 # ______________________________________________________________________________________________________________________
@@ -64,12 +66,14 @@ class GETTOBALL(smach.State):
 
     def execute(self):
         x, y, d = self.findball_service()
+        angle = calc_angle(x)
+        xP, yP = tcc(d, angle)
         if d > minBallRangeThrow:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(x, y)
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
             self.move.publish(self.msg)
 
         else:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(x, y)
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
             self.move.publish(self.msg)
             return 'atBall'
 
@@ -112,11 +116,17 @@ class SET(smach.State):
     def execute(self):
         bx, by, bd = self.findball_service()
         gx, gy, gd = self.findbasket_service()
+
+        bangle = calc_angle(bx)
+        gangle = calc_angle(gx)
+        bxP, byP = tcc(bd, bangle)
+        gxP, gyP = tcc(gd, gangle)
+
         if bd > minBallRangeThrow:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bx, by, gx, gy)
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bxP, byP, gxP, gyP)
             self.move.publish(self.msg)
         else:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bx, by, gx, gy)
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bxP, byP, gxP, gyP)
             self.move.publish(self.msg)
             return 'letsGo'
 
@@ -193,7 +203,7 @@ class READY(smach.State):
     def execute(self):
         bx, by, bd = self.findball_service()
         if bx == 0 and by == 0 or bd == 0:
-            return 'nobBall'
+            return 'noBall'
         gx, gy, gd = self.findbasket_service()
         if gx != 0 and gy != 0 or gd != 0:
             return 'isReady'
@@ -225,8 +235,7 @@ def main():
                                transition={'start': 'READY', 'goOFF': "OFF"})
 
         # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
-        # Check if Ball and Basket, if yes, then go to SET. If noBall, FINDBALL. If no basket, GETTOBALL
-        # (NOTE: noBallTakes priority regardless if basket or noBasket.)
+        # Check if Ball and Basket, if yes, then go to SET. else FINDBALL.
         smach.StateMachine.add('READY', READY(),
                                transition={'noBall': 'FINDBALL', 'isReady': 'SET'})
 
