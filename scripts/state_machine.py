@@ -7,7 +7,9 @@ from srv.srv import ball_srv, ball_srvResponse
 from srv.srv import basket_srv, basket_srvResponse
 from scripts.movement.findBall import findBall as fball
 from scripts.movement.findBasket import findBasket as fbasket
-from scripts.movement.approachBall import  approachBall as approach
+from scripts.movement.approachBall import approachBall
+from scripts.movement.approachThrow import approachThrow
+
 
 # ______________________________________________________________________________________________________________________
 
@@ -62,7 +64,8 @@ class GETTOBALL(smach.State):   # Ask Gerardo
 
     def execute(self):
         x, y, d = self.findball_service()
-        approach(_somex, _somey)  #Here specifically.
+        self.msg.w1, self.msg.w2, self.msg.w3= approachBall(_somex, _somey)  #Here specifically.
+        self.move.publish(self.msg)
 
         if 'atCorrect range':
             return 'atBall'
@@ -97,38 +100,34 @@ class ROTATEAROUNDBALL(smach.State):
         return x, y, d
 
 
-class GETTOBALLWITHBASKET(smach.State):
+class SET(smach.State):
     def __int__(self):
-        smach.State.__init__(self, outcomes=['ballFound', 'noBallFound'])
+        self.msg = Wheel()
+        smach.State.__init__(self, outcomes=['letsGo'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
-    def execute(self):  # execute(self, userdata)
-        x, y, d = self.findball_service()
-        if x != 0 and y != 0:
-            return 'ballFound'
-
-        if self.counter < 100:
-            if self.negRot:
-                self.rotate_to(1, 1, 1)
-                self.counter = self.counter + 1
-                if self.counter == 50:
-                    negRot = False
-            else:
-                self.rotate_to(-1, -1, -1)
-                self.counter = self.counter + 1
-        else:
-            print('100 iteration. ball no found')
-            return 'noBallFound'
-
-class FINDBASKET(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['basket', 'nobasket'])
-
     def execute(self):
+        bx, by, bd = self.findball_service()
+        gx, gy, gd = self.findbasket_service()
+        if bd > minBallRangeThrow:
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bx, by, gx, gy)
+            self.move.publish(self.msg)
+        else:
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bx, by, gx, gy)
+            self.move.publish(self.msg)
+            return 'letsGo'
 
-        print('State: FINDBASKET')
 
-        return 'basket'
+    def findball_service(self):
+        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
+        x, y, d = ball_service
+        return x, y, d
+
+    def findbasket_service(self):
+        basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
+        x, y, d = basket_service
+        return x, y, d
+
 
 class STANDBY(smach.State):
     def __int__(self):
@@ -139,49 +138,50 @@ class STANDBY(smach.State):
         print('Going to start...')
         return 'start'
 
-class BALLBASKET(smach.State):
+
+class GO(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['basket', 'nobasket', 'ballNotInThrower'])
-        self.
+        self.msg = Wheel()
+        smach.State.__init__(self, outcomes=['Done'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
         x, y, d = self.findball_service()
-
         isBallInThrower = self.checkBallinThrower(x, y, d)
+        if isBallInThrower:
+            self.msg.w1, self.msg.w2, self.msg.w3 = spd, -spd, 0    # maybe make formula for straight movement.
         if not isBallInThrower:
-            return 'ballNotInThrower'
-
-
-
+            return 'Done'
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
         x, y, d = ball_service
         return x, y, d
 
-
     def checkBallinThrower(self, x, y, d):
-        if:
+        if 400 < x < 600 and 700 < y < 900 and d < 10:
             return True
         else:
             return False
+
 
 class OFF(smach.State):
     def __int__(self):
         smach.State.__init__(self, outcomes=['exit'])
 
-    def execute(self, userdata):
+    def execute(self):
         print('Going off')
         rospy.signal_shutdown('OFF state and exit.')
         return 'exit'
+
 
 class PAUSE(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['exit'])
 
-    def execute(self, userdata):
+    def execute(self):
         rospy.Subscriber('/refereesignal')
+
 
 class READY(smach.State):
     def __init__(self):
@@ -211,7 +211,6 @@ class READY(smach.State):
         return x, y, d
 
 
-
 # ______________________________________________________________________________________________________________________
 
 def main():
@@ -225,22 +224,31 @@ def main():
     sm = smach.StateMachine(outcomes=['OFF', 'pause'])
     with sm:
         # Wait for signal to start or Off somehow
-        smach.StateMachine.add('STANDBY', STANDBY(), transition={'start': 'READY', 'goOFF': "OFF"})
+        smach.StateMachine.add('STANDBY', STANDBY(),
+                               transition={'start': 'READY', 'goOFF': "OFF"})
         # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
-        # Check if Ball and Basket, if yes, then go to SET. If noBall, FINDBALL. If no basket, GETTOBALL (NOTE: noBallTakes priority regardless if basket or noBasket.)
-        smach.StateMachine.add('READY', READY(), transition={'noBall': 'FINDBALL', 'noBasket': "GETTOBALL", 'isReady' : 'SET'})
+        # Check if Ball and Basket, if yes, then go to SET. If noBall, FINDBALL. If no basket, GETTOBALL
+        # (NOTE: noBallTakes priority regardless if basket or noBasket.)
+        smach.StateMachine.add('READY', READY(),
+                               transition={'noBall': 'FINDBALL', 'noBasket': "GETTOBALL", 'isReady' : 'SET'})
         # Rotate to find ball, once ball is found then go to GETTOBALL
         smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
         # State for approaching ball
-        smach.StateMachine.add('GETTOBALL', GETTOBALL(), transition={'atBall': 'IMATBALL'})
+        smach.StateMachine.add('GETTOBALL', GETTOBALL(),
+                               transition={'atBall': 'IMATBALL'})
         # Once we get to Ball check if there's a basket. If there is, then READY. If no basket, ROTATEAROUNDBALL
-        smach.StateMachine.add('IMATBALL', STANDBY(), transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
+        smach.StateMachine.add('IMATBALL', STANDBY(),
+                               transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
         # Rotate around ball until basketFound and move to READY
-        smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(), transition={'basketFound': 'READY'})
+        smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(),
+                               transition={'basketFound': 'READY'})
         # In set we move to correct direction and distance from ball. Once set up, we go to GO.
-        smach.StateMachine.add('SET', SET(), transition={'letsGo': 'GO'})
-        # In Go we initiate thrower motor and move forward. If no ball in thrower visual range, then we can assume we have thrown and go to READY.
-        smach.StateMachine.add('GO', GO(), transition={'haveThrow': 'READY'})
+        smach.StateMachine.add('SET', SET(),
+                               transition={'letsGo': 'GO'})
+        # In Go we initiate thrower motor and move forward.
+        # If no ball in thrower visual range, then we can assume we have thrown and go to READY.
+        smach.StateMachine.add('GO', GO(),
+                               transition={'haveThrow': 'READY'})
         smach.StateMachine.add('PAUSE', PAUSE())
 
     outcome = sm.execute()
@@ -248,7 +256,7 @@ def main():
 
 if __name__ == '__main__':
     global ball_freedom, center_point, spd
+    spd = 100
+    minBallRangeThrow = 182.5
     ball_freedom = 30
-    center_point = 1920 / 2
-    spd = 10
     main()
