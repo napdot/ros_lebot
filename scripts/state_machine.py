@@ -34,6 +34,7 @@ class FINDBALL(smach.State):
         x, y, d = ball_service
         return x, y, d
 
+
 class IMATBALL(smach.State):
     def __int__(self):
         self.msg = Wheel()
@@ -69,6 +70,30 @@ class GETTOBALL(smach.State):   # Ask Gerardo
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
         x, y, d = ball_service
+        return x, y, d
+
+
+class ROTATEAROUNDBALL(smach.State):
+    def __int__(self):
+        self.msg = Wheel()
+        smach.State.__init__(self, outcomes=['basketFound'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+
+    def execute(self):
+        x, y, d = self.findbasket_service()
+        if x != 0 and y != 0:
+            isBasketFound = False
+            self.msg.w1, self.msg.w2, self.msg.w3 = fbasket(isBasketFound)
+            self.move.publish(self.msg)
+        else:
+            isBasketFound = True
+            self.msg.w1, self.msg.w2, self.msg.w3 = fbasket(isBasketFound)
+            self.move.publish(self.msg)
+            return 'basketFound'
+
+    def findbasket_service(self):
+        basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
+        x, y, d = basket_service
         return x, y, d
 
 
