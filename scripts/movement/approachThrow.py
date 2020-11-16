@@ -17,7 +17,7 @@ maxSpeedEnc = 190 # Serial wheels speed [-190, 190] with PID, [-255, 255] withou
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
 def distanceToBall(xBall, yBall):
-    return np.sqrt(np.square(xBall) +  np.square(yBall))
+    return np.sqrt(np.square(xBall) + np.square(yBall))
 
 # Input ball [xBall, yBall] and basket [xBasket, yBasket] position from camera depth
 # Output motors speed mSer = [M0, M1, M2]

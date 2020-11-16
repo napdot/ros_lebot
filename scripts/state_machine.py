@@ -5,7 +5,9 @@ from msg.msg import Depth_BallLocation
 from msg.msg import Wheel
 from srv.srv import ball_srv, ball_srvResponse
 from srv.srv import basket_srv, basket_srvResponse
-from scripts.movement.findBall import findBall as fb
+from scripts.movement.findBall import findBall as fball
+from scripts.movement.findBasket import findBasket as fbasket
+from scripts.movement.approachBall import  approachBall as approach
 
 # ______________________________________________________________________________________________________________________
 
@@ -19,39 +21,61 @@ class FINDBALL(smach.State):
         x, y, d = self.findball_service()
         if x != 0 and y != 0:
             isBallFound = False
-            self.msg.w1, self.msg.w2, self.msg.w3 = fb(isBallFound)
+            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
         else:
             isBallFound = True
-            self.msg.w1, self.msg.w2, self.msg.w3 = fb(isBallFound)
+            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
             return 'ballFound'
-
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
         x, y, d = ball_service
         return x, y, d
 
-    def move_to_ball(self, d):
-        if d > 30:
-            self.msg.w1, self.msg.w2, self.msg.w3 = spd, spd, spd
-            self.move.publish(self.msg)
-            return False
-        else:
-            return True
+class IMATBALL(smach.State):
+    def __int__(self):
+        self.msg = Wheel()
+        smach.State.__init__(self, outcomes=['basketFound', 'noBasket'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
-    def orient_to_ball(self, x):
-        if (center_point - ball_freedom) < x < (center_point + ball_freedom):   # Ball is middle
-            return True
-        elif x < (center_point - ball_freedom):     # Ball is left
-            self.msg.w1, self.msg.w2, self.msg.w3 = spd, -spd, -spd
+    def execute(self):  # execute(self, userdata)
+        x, y, d = self.findball_service()
+        if x != 0 and y != 0:
+            isBallFound = False
+            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
-            return False
-        elif (center_point + ball_freedom) < x:     # Ball is right
-            self.msg.w1, self.msg.w2, self.msg.w3 = -spd, spd, spd
+        else:
+            isBallFound = True
+            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
-            return False
+            return 'ballFound'
+
+    def findball_service(self):
+        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
+        x, y, d = ball_service
+        return x, y, d
+
+
+class GETTOBALL(smach.State):   # Ask Gerardo
+    def __int__(self):
+        self.msg = Wheel()
+        smach.State.__init__(self, outcomes=['atBall'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+
+    def execute(self):
+        x, y, d = self.findball_service()
+        approach(_somex, _somey)  #Here specifically.
+
+        if 'atCorrect range':
+            return 'atBall'
+
+    def findball_service(self):
+        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
+        x, y, d = ball_service
+        return x, y, d
+
 
 class GETTOBALLWITHBASKET(smach.State):
     def __int__(self):
@@ -187,8 +211,10 @@ def main():
         smach.StateMachine.add('READY', READY(), transition={'noBall': 'FINDBALL', 'noBasket': "GETTOBALL", 'isReady' : 'SET'})
         # Rotate to find ball, once ball is found then go to GETTOBALL
         smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
+        # State for approaching ball
+        smach.StateMachine.add('GETTOBALL', GETTOBALL(), transition={'atBall': 'IMATBALL'})
         # Once we get to Ball check if there's a basket. If there is, then READY. If no basket, ROTATEAROUNDBALL
-        smach.StateMachine.add('GETTOBALL', STANDBY(), transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
+        smach.StateMachine.add('IMATBALL', STANDBY(), transition={'noBasket': 'ROTATEAROUNDBALL', 'basketFound': 'READY'})
         # Rotate around ball until basketFound and move to READY
         smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(), transition={'basketFound': 'READY'})
         # In set we move to correct direction and distance from ball. Once set up, we go to GO.
