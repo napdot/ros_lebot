@@ -41,20 +41,15 @@ class IMATBALL(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):  # execute(self, userdata)
-        x, y, d = self.findball_service()
-        if x != 0 and y != 0:
-            isBallFound = False
-            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
-            self.move.publish(self.msg)
+        x, y, d = self.findbasket_service()
+        if x == 0 and y == 0:
+           return 'noBasket'
         else:
-            isBallFound = True
-            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
-            self.move.publish(self.msg)
-            return 'ballFound'
+            return 'basketFound'
 
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
+    def findbasket_service(self):
+        basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
+        x, y, d = basket_service
         return x, y, d
 
 
