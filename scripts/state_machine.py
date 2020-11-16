@@ -56,7 +56,7 @@ class IMATBALL(smach.State):
         return x, y, d
 
 
-class GETTOBALL(smach.State):   # Ask Gerardo
+class GETTOBALL(smach.State):
     def __int__(self):
         self.msg = Wheel()
         smach.State.__init__(self, outcomes=['atBall'])
@@ -64,10 +64,13 @@ class GETTOBALL(smach.State):   # Ask Gerardo
 
     def execute(self):
         x, y, d = self.findball_service()
-        self.msg.w1, self.msg.w2, self.msg.w3= approachBall(_somex, _somey)  #Here specifically.
-        self.move.publish(self.msg)
+        if d > minBallRangeThrow:
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(x, y)
+            self.move.publish(self.msg)
 
-        if 'atCorrect range':
+        else:
+            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(x, y)
+            self.move.publish(self.msg)
             return 'atBall'
 
     def findball_service(self):
@@ -142,7 +145,7 @@ class STANDBY(smach.State):
 class GO(smach.State):
     def __init__(self):
         self.msg = Wheel()
-        smach.State.__init__(self, outcomes=['Done'])
+        smach.State.__init__(self, outcomes=['haveThrow'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):
@@ -255,8 +258,7 @@ def main():
 
 
 if __name__ == '__main__':
-    global ball_freedom, center_point, spd
+    global spd, minBallRangeThrow
     spd = 100
     minBallRangeThrow = 182.5
-    ball_freedom = 30
     main()
