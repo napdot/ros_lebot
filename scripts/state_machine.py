@@ -47,8 +47,8 @@ class IMATBALL(smach.State):
 
     def execute(self):  # execute(self, userdata)
         x, y, d = self.findbasket_service()
-        if x == 0 and y == 0:
-           return 'noBasket'
+        if x == 0 and y == 0 or d = 0:
+            return 'noBasket'
         else:
             return 'basketFound'
 
@@ -91,7 +91,7 @@ class ROTATEAROUNDBALL(smach.State):
 
     def execute(self):
         x, y, d = self.findbasket_service()
-        if x != 0 and y != 0:
+        if x != 0 and y != 0 or d !=0:
             isBasketFound = False
             self.msg.w1, self.msg.w2, self.msg.w3 = fbasket(isBasketFound)
             self.move.publish(self.msg)
@@ -100,41 +100,6 @@ class ROTATEAROUNDBALL(smach.State):
             self.msg.w1, self.msg.w2, self.msg.w3 = fbasket(isBasketFound)
             self.move.publish(self.msg)
             return 'basketFound'
-
-    def findbasket_service(self):
-        basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
-        x, y, d = basket_service
-        return x, y, d
-
-
-class SET(smach.State):
-    def __int__(self):
-        self.msg = Wheel()
-        smach.State.__init__(self, outcomes=['letsGo'])
-        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
-
-    def execute(self):
-        bx, by, bd = self.findball_service()
-        gx, gy, gd = self.findbasket_service()
-
-        bangle = calc_angle(bx)
-        gangle = calc_angle(gx)
-        bxP, byP = tcc(bd, bangle)
-        gxP, gyP = tcc(gd, gangle)
-
-        if bd > minBallRangeThrow:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bxP, byP, gxP, gyP)
-            self.move.publish(self.msg)
-        else:
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachThrow(bxP, byP, gxP, gyP)
-            self.move.publish(self.msg)
-            return 'letsGo'
-
-
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
-        return x, y, d
 
     def findbasket_service(self):
         basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
@@ -159,11 +124,17 @@ class GO(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):
-        x, y, d = self.findball_service()
-        isBallInThrower = self.checkBallinThrower(x, y, d)
-        if isBallInThrower:
-            self.msg.w1, self.msg.w2, self.msg.w3 = spd, -spd, 0    # maybe make formula for straight movement.
-        if not isBallInThrower:
+        bx, by, bd = self.findball_service()
+        gx, gy, gd = self.findbasket_service()
+        bangle = calc_angle(bx)
+        gangle = calc_angle(gx)
+        bxP, byP = tcc(bd, bangle)
+        gxP, gyP = tcc(gd, gangle)
+        approachThrow(bxP, byP, gxP, gyP)
+
+        if bx == 0 and by == 0 or bd == 0:
+            return 'haveThrow'
+        if gx == 0 and gy == 0 or bd == 0:
             return 'haveThrow'
 
     def findball_service(self):
@@ -171,11 +142,10 @@ class GO(smach.State):
         x, y, d = ball_service
         return x, y, d
 
-    def checkBallinThrower(self, x, y, d):
-        if 400 < x < 600 and 700 < y < 900 and d < 10:      # check correct vals once camera is set up
-            return True
-        else:
-            return False
+    def findbasket_service(self):
+        basket_service = rospy.ServiceProxy('/basket_service', basket_srv)
+        x, y, d = basket_service
+        return x, y, d
 
 
 class OFF(smach.State):
@@ -237,7 +207,7 @@ def main():
         # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
         # Check if Ball and Basket, if yes, then go to SET. else FINDBALL.
         smach.StateMachine.add('READY', READY(),
-                               transition={'noBall': 'FINDBALL', 'isReady': 'SET'})
+                               transition={'noBall': 'FINDBALL', 'isReady': 'GO'})
 
         # Rotate to find ball, once ball is found then go to GETTOBALL
         smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
@@ -253,10 +223,6 @@ def main():
         # Rotate around ball until basketFound and move to READY
         smach.StateMachine.add('ROTATEAROUNDBALL', ROTATEAROUNDBALL(),
                                transition={'basketFound': 'READY'})
-
-        # In set we move to correct direction and distance from ball. Once set up, we go to GO.
-        smach.StateMachine.add('SET', SET(),
-                               transition={'letsGo': 'GO'})
 
         # In Go we initiate thrower motor and move forward.
         # If no ball in thrower visual range, then we can assume we have thrown and go to READY.
