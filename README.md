@@ -7,7 +7,8 @@
 ​	1) realsense-ros
 ​	2) ros_lebot
 ​	3) cv_bridge
-​    4) ds4_driver
+​    	4) ds4_driver
+	5) rosbridge_suite
 
 #### Topics
 
