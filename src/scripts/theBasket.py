@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import numpy as np
-from additional_msgs.msg import Depth_BasketLocation
+from msg.msg import Depth_BasketLocation
 import cv2
 import json
 

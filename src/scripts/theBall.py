@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import numpy as np
-from additional_msgs.msg import Depth_BallLocation
+from msg.msg import Depth_BallLocation
 import cv2
 import json
 
@@ -10,7 +11,7 @@ import json
 class Ball:
     def __init__(self):
         self.green_parameters = []
-        self.ball_location = [0, 0, 0]
+        self.ball_location = [0, 0]
         self.ball_distance = 0
         self.set_ball_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
@@ -53,7 +54,7 @@ class Ball:
         self.mask = cv2.inRange(hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
         self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, kernel)
 
-        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+        cnts = cv2.findContours(self.mask.copy(), cv2.RETR_EXTERNAL,
                                 cv2.CHAIN_APPROX_SIMPLE)[-2]
         if len(cnts) > 0:
             c = max(cnts, key=cv2.contourArea)

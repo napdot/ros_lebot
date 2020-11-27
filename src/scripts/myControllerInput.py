@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
-from ds4_driver.msg.msg import Report
-from additional_msgs.msg import Wheel
+from ds4_driver.msg import Report
+from msg.msg import Wheel
 from math import atan2, cos, sqrt
 
 
