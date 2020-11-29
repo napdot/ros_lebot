@@ -3,7 +3,7 @@ import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import numpy as np
-from msg.msg import Depth_BallLocation
+from lebot.msg import Depth_BallLocation
 import cv2
 import json
 
@@ -16,8 +16,7 @@ class Ball:
         self.set_ball_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
-        self.ball_depth_location_pub = rospy.Publisher("/ball", Depth_BallLocation)
-        self.ball_depth_location_pub.pub(self.ball_message)
+        self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=1)
         self.mask = None
 
     def get_my_image_callback(self, data):
@@ -29,6 +28,7 @@ class Ball:
         bridge_depth = CvBridge()
         depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
         self.depth_to_ball(depth_image)
+        self.ball_depth_location_pub.publish(self.ball_message)
 
     def depth_to_ball(self, depth_img):
         # y1, y2, x1, x2 = (self.ball_location[1] - self.ball_location[2]),\
@@ -72,13 +72,16 @@ class Ball:
             self.ball_location = [0, 0]
 
     def set_ball_parameters(self):
-        with open('../color_parameters.json') as f:
-            d = json.load(f)
-            self.green_parameters = d['green']
+        try:
+            with open('color_parameters.json') as f:
+                d = json.load(f)
+                self.green_parameters = d['green']
+        except:
+            self.green_parameters = {"min": [51, 131, 0], "max": [81, 226, 255]}
 
 
 if __name__ == '__main__':
-    rospy.init_node('/ball_calc', anonymous=False)
+    rospy.init_node('ball_calc', anonymous=False)
     Ball()
     rospy.spin()
 

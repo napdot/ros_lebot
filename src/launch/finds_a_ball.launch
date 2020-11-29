@@ -1,0 +1,14 @@
+<launch>
+    <group ns="main">
+        <node pkg="lebot" type="finds_a_ball" name="Logic"/>
+    </group>
+    <group ns = 'Movement'>
+        <node pkg="lebot" type="theWheel" name="RosToWheel"/>
+    </group>
+    <group ns="Visual">
+        <node pkg="lebot" type="theBall" name="FindBall"/>
+    </group>
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="align_depth" value="true"/>
+    </include>
+</launch>

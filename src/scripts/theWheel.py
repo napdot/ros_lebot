@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import rospy
-from msg.msg import Wheel
+from lebot.msg import Wheel
 import serial
 
 
@@ -21,6 +21,6 @@ class Move:
 
 
 if __name__ == '__main__':
-    rospy.init_node('/vruum', anonymous=False)
+    rospy.init_node('vruum', anonymous=False)
     Move()
     rospy.spin()

@@ -3,7 +3,7 @@ import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import numpy as np
-from msg.msg import Depth_BasketLocation
+from lebot.msg import Depth_BasketLocation
 import cv2
 import json
 
@@ -18,8 +18,7 @@ class Basket:
         self.set_basket_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
-        self.basket_depth_location_pub = rospy.Publisher("/basket", Depth_BasketLocation)
-        self.basket_depth_location_pub.pub(self.basket_message)
+        self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
         self.mask = None
 
     def get_my_image_callback(self, data):
@@ -31,6 +30,7 @@ class Basket:
         bridge_depth = CvBridge()
         depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
         self.depth_to_basket(depth_image)
+        self.basket_depth_location_pub.publish(self.basket_message)
 
     def depth_to_basket(self, depth_img):
         selected_depth_array = depth_img * self.mask
@@ -45,6 +45,7 @@ class Basket:
         return msg
 
     def get_basket_location(self, frame, color):
+
         if color == 'red':
             self.mask = cv2.inRange(frame, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
         elif color == 'blue':
@@ -58,13 +59,18 @@ class Basket:
         self.basket_location = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
     def set_basket_parameters(self):
-        with open('../color_parameters.json') as f:
-            d = json.load(f)
-            self.red_parameters = d['red']
-            self.blue_parameters = d['blue']
+        try:
+            with open('color_parameters.json') as f:
+                d = json.load(f)
+                self.red_parameters = d['red']
+                self.blue_parameters = d['blue']
+
+        except:
+            self.red_parameters = {"min": [151, 98, 87], "max": [179, 232, 214]}
+            self.blue_parameters ={"min": [99, 119, 64], "max": [118, 255, 175]}
 
 
 if __name__ == '__main__':
-    rospy.init_node('/basket_calc', anonymous=False)
+    rospy.init_node('basket_calc', anonymous=False)
     Basket('red')
     rospy.spin()
