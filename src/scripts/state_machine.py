@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import rospy
 import smach
-from src.msg import Depth_BallLocation
-from src.msg import Wheel
-from src.srv import ball_srv, ball_srvResponse
-from src.srv import basket_srv, basket_srvResponse
-from src.scripts.movement.findBall import findBall as fball
-from src.scripts.movement.findBasket import findBasket as fbasket
-from src.scripts.movement.approachBall import approachBall
-from src.scripts.movement.approachThrow import approachThrow
-from src.scripts.transfCamCoord import transfCamCoord as tcc
-from src.scripts.calcAngle import calc_angle
-from src.scripts.myControllerInput import Cont
+import smach_ros
+from msg.msg import Depth_BallLocation
+from msg.msg import Wheel
+from srv.srv import ball_srv, ball_srvResponse
+from srv.srv import basket_srv, basket_srvResponse
+from scripts.movement.findBall import findBall as fball
+from scripts.movement.findBasket import findBasket as fbasket
+from scripts.movement.approachBall import approachBall
+from scripts.movement.approachThrow import approachThrow
+from scripts.transfCamCoord import transfCamCoord as tcc
+from scripts.calcAngle import calc_angle
 
 
 # ______________________________________________________________________________________________________________________
@@ -189,13 +189,6 @@ class READY(smach.State):
         x, y, d = basket_service
         return x, y, d
 
-class MANUALCONTROL(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['toStandby'])
-        self.myCont = Cont()
-
-    def execute(self):
-        pass
 
 # ______________________________________________________________________________________________________________________
 
@@ -210,7 +203,7 @@ def main():
     with sm:
         # Wait for signal to start or Off somehow
         smach.StateMachine.add('STANDBY', STANDBY(),
-                               transition={'start': 'READY', 'goOFF': "OFF", 'control': 'MANUALCONTROL'})
+                               transition={'start': 'READY', 'goOFF': "OFF"})
 
         # READY is a check phase that checks if everything is ready (in the game scope) to go ahead and throw.
         # Check if Ball and Basket, if yes, then go to SET. else FINDBALL.
@@ -238,13 +231,11 @@ def main():
                                transition={'haveThrow': 'READY'})
         smach.StateMachine.add('PAUSE', PAUSE())
 
-        smach.StateMachine.add('MANUALCONTROL', MANUALCONTROL(), transition={'toStandby': 'STANDBY'})
-
-
     outcome = sm.execute()
 
 
 if __name__ == '__main__':
+    global spd, minBallRangeThrow
     spd = 100
     minBallRangeThrow = 182.5
     main()
