@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
-from msg.msg import Depth_BallLocation
-from srv.srv import ball_srv, ball_srvResponse
+from src.msg import Depth_BallLocation
+from src.srv import ball_srv, ball_srvResponse
 
 
 class BallService:
