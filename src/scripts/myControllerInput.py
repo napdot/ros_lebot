@@ -3,7 +3,7 @@
 import rospy
 from ds4_driver.msg import Report
 from lebot.msg import Wheel
-froms std_msgs.msg import Int8
+fromm lebot.msg import Thrower
 
 
 class Cont:
@@ -15,8 +15,8 @@ class Cont:
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=10)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=10)
         self.message = Wheel()
-        self.thrower_pub = rospy.Publisher('/thrower_values', Int8, queue_size=10)
-        self.thrower_message = Int8()
+        self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=10)
+        self.thrower_message = Thrower()
         self.thrower_speed = 50
 
     def controller_callback(self, data):

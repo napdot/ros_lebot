@@ -56,6 +56,7 @@ add_message_files(
   Depth_BallLocation.msg
   Depth_BasketLocation.msg
   Wheel.msg
+  Thrower.msg
 )
 
 ## Generate services in the 'srv' folder
