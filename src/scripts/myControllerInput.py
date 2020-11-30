@@ -36,7 +36,7 @@ class Cont:
             message.w2 = -self.default_speed
             message.w3 = -self.default_speed
 
-        elif report.dpad.right:
+        elif report.dpad_right:
             message.w1 = self.default_speed
             message.w2 = self.default_speed
             message.w3 = self.default_speed
@@ -48,5 +48,4 @@ if __name__ == '__main__':
     rospy.init_node('controller_input', anonymous=False)
     theC = Cont()
     rospy.spin()
-
 
