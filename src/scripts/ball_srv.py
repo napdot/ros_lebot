@@ -6,7 +6,7 @@ from lebot.srv import ball
 class BallService:
     def __init__(self):
         self.ball_msg = Depth_BallLocation
-        self.ball_serv = rospy.Service('/ball_service', self.ball_service_callback)
+        self.ball_serv = rospy.Service('/ball_service', ball, self.ball_service_callback)
         self.ball_sub = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_sub_callback, queuesize=1)
 
     def ball_service_callback(self):
