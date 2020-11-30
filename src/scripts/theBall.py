@@ -18,6 +18,7 @@ class Ball:
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
         self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=1)
         self.mask = None
+        self.ball_message = Depth_BallLocation()
 
     def get_my_image_callback(self, data):
         bridge_img = CvBridge()
@@ -28,6 +29,10 @@ class Ball:
         bridge_depth = CvBridge()
         depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
         self.depth_to_ball(depth_image)
+        self.ball_message.x = 0
+        self.ball_message.y = 0
+        self.ball_message.d = 0
+        self.update_ball_message()
         self.ball_depth_location_pub.publish(self.ball_message)
 
     def depth_to_ball(self, depth_img):
@@ -38,12 +43,10 @@ class Ball:
         selected_depth_array = depth_img * self.mask
         self.ball_distance = np.mean(selected_depth_array)
 
-    def ball_message(self):
-        msg = Depth_BallLocation()
-        msg.x = self.ball_location[0]
-        msg.y = self.ball_location[1]
-        msg.d = self.ball_distance
-        return msg
+    def update_ball_message(self):
+        self.ball_message.x = self.ball_location[0]
+        self.ball_message.y = self.ball_location[1]
+        self.ball_message.d = self.ball_distance
 
     def get_ball_location(self, frame):
         radius_min = 10
@@ -82,6 +85,6 @@ class Ball:
 
 if __name__ == '__main__':
     rospy.init_node('ball_calc', anonymous=False)
-    Ball()
+    IWhoFindsABall = Ball()
     rospy.spin()
 

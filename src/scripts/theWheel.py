@@ -23,5 +23,5 @@ class Move:
 
 if __name__ == '__main__':
     rospy.init_node('vruum', anonymous=False)
-    JustMove = Move()
+    IWhoMoves = Move()
     rospy.spin()

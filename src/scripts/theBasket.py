@@ -20,6 +20,8 @@ class Basket:
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
         self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
         self.mask = None
+        self.color = color
+        self.basket_message = Depth_BasketLocation()
 
     def get_my_image_callback(self, data):
         bridge_img = CvBridge()
@@ -30,6 +32,10 @@ class Basket:
         bridge_depth = CvBridge()
         depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
         self.depth_to_basket(depth_image)
+        self.basket_message.x = 0
+        self.basket_message.y = 0
+        self.basket_message.d = 0
+        self.update_basket_message()
         self.basket_depth_location_pub.publish(self.basket_message)
 
     def depth_to_basket(self, depth_img):
@@ -37,12 +43,10 @@ class Basket:
         # selected_depth_array = np.mean(depth_img[self.basket_edges[3]:self.basket_edges[2], self.basket_edges[1]: self.basket_edges[0]])
         self.basket_distance = np.mean(selected_depth_array)
 
-    def basket_message(self):
-        msg = Depth_BasketLocation()
-        msg.x = self.basket_location[0]
-        msg.y = self.basket_location[1]
-        msg.d = self.basket_distance
-        return msg
+    def update_basket_message(self):
+        self.basket_message.x = self.basket_location[0]
+        self.basket_message.y = self.basket_location[1]
+        self.basket_message.d = self.basket_distance
 
     def get_basket_location(self, frame, color):
 
@@ -72,5 +76,5 @@ class Basket:
 
 if __name__ == '__main__':
     rospy.init_node('basket_calc', anonymous=False)
-    Basket('red')
+    IWhoFindsABasket = Basket('red')
     rospy.spin()
