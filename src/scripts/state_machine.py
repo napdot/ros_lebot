@@ -23,6 +23,7 @@ class FINDBALL(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):  # execute(self, userdata)
+        rospy.loginfo('STATEMACHINE: FINDBALL')
         x, y, d = self.findball_service()
         if x != 0 and y != 0:
             isBallFound = False
@@ -33,6 +34,7 @@ class FINDBALL(smach.State):
             self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
             return 'ballFound'
+
 
     def findball_service(self):
         ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
@@ -47,6 +49,7 @@ class IMATBALL(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):  # execute(self, userdata)
+        rospy.loginfo('STATEMACHINE: IMATBALL')
         x, y, d = self.findbasket_service()
         if x == 0 and y == 0 or d = 0:
             return 'noBasket'
@@ -64,12 +67,14 @@ class GETTOBALL(smach.State):
         self.msg = Wheel()
         smach.State.__init__(self, outcomes=['atBall'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.minBallRangeThrow = 182
 
     def execute(self):
+        rospy.loginfo('STATEMACHINE: GETTOBALL')
         x, y, d = self.findball_service()
         angle = calc_angle(x)
         xP, yP = tcc(d, angle)
-        if d > minBallRangeThrow:
+        if d > self.minBallRangeThrow:
             self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
             self.move.publish(self.msg)
 
@@ -91,6 +96,7 @@ class ROTATEAROUNDBALL(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):
+        rospy.loginfo('STATEMACHINE: ROTATEAROUNDBALL')
         x, y, d = self.findbasket_service()
         if x != 0 and y != 0 or d !=0:
             isBasketFound = False
@@ -113,8 +119,7 @@ class STANDBY(smach.State):
         smach.State.__init__(self, outcomes=['start, goOff'])
 
     def execute(self, userdata):
-        print('Standby')
-        print('Going to start...')
+        rospy.loginfo('STATEMACHINE: STANDBY')
         return 'start'
 
 
@@ -125,6 +130,7 @@ class GO(smach.State):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
 
     def execute(self):
+        rospy.loginfo('STATEMACHINE: GO')
         bx, by, bd = self.findball_service()
         gx, gy, gd = self.findbasket_service()
         bangle = calc_angle(bx)
@@ -154,7 +160,7 @@ class OFF(smach.State):
         smach.State.__init__(self, outcomes=['exit'])
 
     def execute(self):
-        print('Going off')
+        rospy.loginfo('STATEMACHINE: OFF')
         rospy.signal_shutdown('OFF state and exit.')
         return 'exit'
 
@@ -164,6 +170,7 @@ class PAUSE(smach.State):
         smach.State.__init__(self, outcomes=['exit'])
 
     def execute(self):
+        rospy.loginfo('STATEMACHINE: PAUSE')
         rospy.Subscriber('/refereesignal')
 
 
@@ -172,6 +179,7 @@ class READY(smach.State):
         smach.State.__init__(self, outcomes=['noBall', 'isReady'])
 
     def execute(self):
+        rospy.loginfo('STATEMACHINE: READY')
         bx, by, bd = self.findball_service()
         if bx == 0 and by == 0 or bd == 0:
             return 'noBall'
@@ -235,7 +243,4 @@ def main():
 
 
 if __name__ == '__main__':
-    global spd, minBallRangeThrow
-    spd = 100
-    minBallRangeThrow = 182.5
     main()
