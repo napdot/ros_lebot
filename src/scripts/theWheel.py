@@ -2,6 +2,7 @@
 import rospy
 from lebot.msg import Wheel
 import serial
+froms std_msgs.msg import Int8
 
 
 class Move:
@@ -11,6 +12,7 @@ class Move:
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
 
         self.wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback)
+        self.thrower_sub = rospy.Subscriber("/thrower_values", Int8, self.thrower_callback)
 
     def move_to(self, w1, w2, w3):
         sot = ("sd:{0}:{1}:{2}\n".format(w1, w2, w3))
@@ -19,6 +21,14 @@ class Move:
 
     def wheel_callback(self, data):
         self.move_to(data.w1, data.w2, data.w3)
+
+    def throw_at(self, ts):
+        tot = ("d:{0}\n".format(ts))
+        self.ser.write(tot.encode('utf-8'))
+        rospy.loginfo(tot)
+
+    def thrower_callback(self, data):
+        self.throw_at(self, data.Int8)
 
 
 if __name__ == '__main__':
