@@ -13,8 +13,8 @@ class Cont:
         self.robotAngularVelocity = 10
         self.message = Wheel
         self.default_speed = 10
-        self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=1)
-        self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=10)
+        self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=10)
 
     def controller_callback(self, data):
         report = Report()
@@ -45,6 +45,7 @@ class Cont:
                 self.message.w2 = self.default_speed
 
         self.controller_pub.publish(self.message)
+        rate.sleep()
 
     def omni(self, speed_x, speed_y):
         x = int(speed_x / 250)
@@ -66,5 +67,6 @@ class Cont:
 
 if __name__ == '__main__':
     rospy.init_node('controller_input', anonymous=False)
+    rate = rospy.Rate(10)
     Cont()
     rospy.spin()
