@@ -13,12 +13,16 @@ class Cont:
         self.default_speed = 10
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=10)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=10)
+<<<<<<< HEAD
         self.message = Wheel()
+=======
+>>>>>>> 92325e868eb0245370188b11bcca8f64d5233c6c
 
     def controller_callback(self, data):
         report = Report()
         report = data
 
+<<<<<<< HEAD
         self.message.w1 = 0
         self.message.w2 = 0
         self.message.w3 = 0
@@ -44,6 +48,32 @@ class Cont:
             self.message.w3 = self.default_speed
 
         self.controller_pub.publish(self.message)
+=======
+        message = Wheel
+        message.w1, message.w2, message.w3 = 0, 0, 0
+
+        if report.dpad_up:
+            message.w1 = self.default_speed
+            message.w2 = -self.default_speed
+            message.w3 = 0
+
+        elif report.dpad_down:
+            message.w1 = -self.default_speed
+            message.w2 = self.default_speed
+            message.w3 = 0
+
+        elif report.dpad_left:
+            message.w1 = -self.default_speed
+            message.w2 = -self.default_speed
+            message.w3 = -self.default_speed
+
+        elif report.dpad_right:
+            message.w1 = self.default_speed
+            message.w2 = self.default_speed
+            message.w3 = self.default_speed
+
+        self.controller_pub.publish(message)
+>>>>>>> 92325e868eb0245370188b11bcca8f64d5233c6c
 
 
 if __name__ == '__main__':
