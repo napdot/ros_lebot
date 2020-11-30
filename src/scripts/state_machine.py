@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
+
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import rospy
 import smach
 import smach_ros
-from msg.msg import Depth_BallLocation
-from msg.msg import Wheel
-from srv.srv import ball_srv, ball_srvResponse
-from srv.srv import basket_srv, basket_srvResponse
-from scripts.movement.findBall import findBall as fball
-from scripts.movement.findBasket import findBasket as fbasket
-from scripts.movement.approachBall import approachBall
-from scripts.movement.approachThrow import approachThrow
-from scripts.transfCamCoord import transfCamCoord as tcc
-from scripts.calcAngle import calc_angle
+from lebot.msg import Depth_BallLocation
+from lebot.msg import Wheel
+from lebot.srv import ball_srv
+from lebot.srv import basket_srv
+from movement.findBall import findBall as fball
+from movement.findBasket import findBasket as fbasket
+from movement.approachBall import approachBall
+from movement.approachThrow import approachThrow
+from transfCamCoord import transfCamCoord as tcc
+from calcAngle import calc_angle
 
 
 # ______________________________________________________________________________________________________________________

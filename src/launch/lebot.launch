@@ -2,15 +2,15 @@
     <arg name="basket" default="blue" />
     <arg name="ip" default="/localhost:9020" />
     <group ns="main">
-        <node pkg="ros_lebot" name="Logic" type="state_machine"/>
+        <node pkg="lebot" type="state_machine" name="Logic" />
     </group>
     <group ns = 'Movement'>
-        <node pkg="ros_lebot" type="myControllerInput" name="ControllerToRos" />
-        <node pkg="ros_lebot" type="theWheel" name="RosToWheel"/>
+        <node pkg="lebot" type="myControllerInput" name="ControllerToRos" />
+        <node pkg="lebot" type="theWheel" name="RosToWheel"/>
     </group>
     <group ns="Visual">
-        <node pkg="ros_lebot" type="theBall" name="FindBall"/>
-        <node pkg="ros_lebot" type="theBasket" name="FindBasket"/>
+        <node pkg="lebot" type="theBall" name="FindBall"/>
+        <node pkg="lebot" type="theBasket" name="FindBasket"/>
     </group>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="align_depth" value="true"/>

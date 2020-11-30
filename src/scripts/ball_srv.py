@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import rospy
-from msg.msg import Depth_BallLocation
-from srv.srv import ball_srv, ball_srvResponse
-
+from lebot.msg import Depth_BallLocation
+from lebot.srv import ball
 
 class BallService:
     def __init__(self):
@@ -11,7 +10,7 @@ class BallService:
         self.ball_sub = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_sub_callback, queuesize=1)
 
     def ball_service_callback(self):
-        return ball_srvResponse(
+        return ball(
             x=self.ball_msg.x,
             y=self.ball_msg.y,
             d=self.ball_msg.d
@@ -24,6 +23,6 @@ class BallService:
 
 
 if __name__ == "__main__":
-    rospy.init_node('/ball_node_srv')
+    rospy.init_node('ball_node_srv')
     BallService()
     rospy.spin()
