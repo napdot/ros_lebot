@@ -15,6 +15,7 @@ class Move:
     def move_to(self, w1, w2, w3):
         sot = ("sd:{0}:{1}:{2}\n".format(w1, w2, w3))
         self.ser.write(sot.encode('utf-8'))
+        rospy.loginfo(sot)
 
     def wheel_callback(self, data):
         self.move_to(data.w1, data.w2, data.w3)
