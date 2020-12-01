@@ -6,12 +6,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import rospy
 import smach
 from lebot.msg import Wheel
-from lebot.srv import ball
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
-
+from lebot.msg import Depth_BallLocation
+from lebot.msg import Depth_BasketLocation
 
 # ______________________________________________________________________________________________________________________
 
@@ -20,10 +20,11 @@ class FINDBALL(smach.State):
         self.msg = Wheel()
         smach.State.__init__(self, outcomes=['ballFound'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.ball_subscriber = rospy.Suscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
+        self.x, self.y, self.d = None, None, None
 
     def execute(self):  # execute(self, userdata)
-        x, y, d = self.findball_service()
-        if x != 0 and y != 0:
+        if (self.x == 0 and self.y == 0) or self.d == 0:
             isBallFound = False
             self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
@@ -33,10 +34,8 @@ class FINDBALL(smach.State):
             self.move.publish(self.msg)
             return 'ballFound'
 
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
-        return x, y, d
+    def ball_callback(self, data):
+        self.x, self.y, self.d = data.x, data.y, data.d
 
 
 class GETTOBALL(smach.State):
