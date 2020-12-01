@@ -21,7 +21,7 @@ class FINDBALL(smach.State):
         smach.State.__init__(self, outcomes=['ballFound'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.ball_subscriber = rospy.Suscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
-        self.x, self.y, self.d = None, None, None
+        self.x, self.y, self.d = 0, 0, 0
 
     def execute(self):  # execute(self, userdata)
         if (self.x == 0 and self.y == 0) or self.d == 0:
@@ -43,11 +43,12 @@ class GETTOBALL(smach.State):
         self.msg = Wheel()
         smach.State.__init__(self, outcomes=['atBall'])
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.ball_subscriber = rospy.Suscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
+        self.x, self.y, self.d = 0, 0, 0
 
     def execute(self):
-        x, y, d = self.findball_service()
-        angle = calc_angle(x)
-        xP, yP = tcc(d, angle)
+        angle = calc_angle(self.x)
+        xP, yP = tcc(self.d, angle)
         if d > minBallRangeThrow:
             self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
             self.move.publish(self.msg)
@@ -57,10 +58,8 @@ class GETTOBALL(smach.State):
             self.move.publish(self.msg)
             return 'atBall'
 
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
-        return x, y, d
+    def ball_callback(self, data):
+        self.x, self.y, self.d = data.x, data.y, data.d
 
 
 class STANDBY(smach.State):
