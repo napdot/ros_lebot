@@ -66,9 +66,8 @@ class STANDBY(smach.State):
     def __int__(self):
         smach.State.__init__(self, outcomes=['start'])
 
-    def execute(self, userdata):
-        print('Standby')
-        print('Going to start...')
+    def execute(self):
+        rospy.loginfo('Standby - Now starting....')
         return 'start'
 
 
