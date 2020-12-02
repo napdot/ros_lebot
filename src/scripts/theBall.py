@@ -14,33 +14,46 @@ class Ball:
         self.ball_location = [0, 0]
         self.ball_distance = 0
         self.set_ball_parameters()
-        self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
-        self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
+        self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
+        self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback, queue_size=1)
         self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=1)
-        self.mask = None
+        self.hsv = np.zeros((480, 650, 3), np.uint16)
+        self.mask = np.zeros((480, 650, 3), np.uint16)
+        self.depth = np.zeros((480, 650, 3), np.uint16)
         self.ball_message = Depth_BallLocation()
+        self.kernel = np.ones((3, 3), np.uint8)
+        self.depth_bridge = CvBridge()
+        self.color_bridge = CvBridge()
 
     def get_my_image_callback(self, data):
-        bridge_img = CvBridge()
-        image = bridge_img.compressed_imgmsg_to_cv2(data, "bgr8")
-        self.get_ball_location(image)
+        try:
+            color_image = self.color_bridge.imgmsg_to_cv2(data, data.encoding)
+        except CvBridgeError as e:
+            print(e)
+            color_image = np.zeros((480, 650, 3), np.uint16)
+
+        self.hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
+        self.get_mask()
 
     def get_my_depth_callback(self, data):
-        bridge_depth = CvBridge()
-        depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
-        self.depth_to_ball(depth_image)
-        self.ball_message.x = 0
-        self.ball_message.y = 0
-        self.ball_message.d = 0
+        try:
+            depth_image = self.depth_bridge.imgmsg_to_cv2(data, data.encoding)
+        except CvBridgeError as e:
+            print(e)
+            depth_image = np.zeros((480, 650, 3), np.uint16)
+
+        self.depth = depth_image
+        self.get_ball_location()
+        self.get_depth_to_ball()
         self.update_ball_message()
         self.ball_depth_location_pub.publish(self.ball_message)
 
-    def depth_to_ball(self, depth_img):
-        # y1, y2, x1, x2 = (self.ball_location[1] - self.ball_location[2]),\
-        #                  (self.ball_location[1] + self.ball_location[2]),\
-        #                  (self.ball_location[0] - self.ball_location[2]),\
-        #                  (self.ball_location[0] + self.ball_location[2])
-        selected_depth_array = depth_img * self.mask
+    def get_mask(self):
+        self.mask = cv2.inRange(self.hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
+        self.mask = (cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, self.kernel)).astype(np.uint8)
+
+    def get_depth_to_ball(self):
+        selected_depth_array = self.depth * self.mask
         self.ball_distance = np.mean(selected_depth_array)
 
     def update_ball_message(self):
@@ -48,17 +61,11 @@ class Ball:
         self.ball_message.y = self.ball_location[1]
         self.ball_message.d = self.ball_distance
 
-    def get_ball_location(self, frame):
+    def get_ball_location(self):
         radius_min = 10
         radius_max = 50
-        kernel = np.ones((3, 3), np.uint8)
 
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        self.mask = cv2.inRange(hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
-        self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, kernel)
-
-        cnts = cv2.findContours(self.mask.copy(), cv2.RETR_EXTERNAL,
-                                cv2.CHAIN_APPROX_SIMPLE)[-2]
+        cnts = cv2.findContours(self.mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
         if len(cnts) > 0:
             c = max(cnts, key=cv2.contourArea)
             ((x, y), r) = cv2.minEnclosingCircle(c)
@@ -68,11 +75,11 @@ class Ball:
             else:
                 cX = 0
                 cY = 0
-
-            self.ball_location = [cX, cY]
-
         else:
-            self.ball_location = [0, 0]
+            cX = 0
+            cY = 0
+
+        self.ball_location = [cX, cY]
 
     def set_ball_parameters(self):
         try:

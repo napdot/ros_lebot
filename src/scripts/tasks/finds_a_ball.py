@@ -75,8 +75,6 @@ class STANDBY(smach.State):
 
 def main():
     rospy.init_node('state_machine')
-    # Wait for published services to become available.
-    rospy.wait_for_service("/ball_service")
 
     # State machine
     sm = smach.StateMachine(outcomes=['OFF', 'pause'])
