@@ -1,12 +1,16 @@
 <launch>
-    <group ns="main">
-        <node pkg="lebot" type="finds_a_ball" name="Logic"/>
-    </group>
     <group ns = 'Movement'>
-        <node pkg="lebot" type="theWheel" name="RosToWheel"/>
+        <node pkg="lebot" type="myControllerInput.py" name="ControllerToRos" />
+        <node pkg="lebot" type="theWheel.py" name="RosToWheel"/>
     </group>
-    <group ns="Visual">
-        <node pkg="lebot" type="theBall" name="FindBall"/>
+    <group ns = 'Logic'>
+        <node pkg="lebot" type="finds_a_ball.py" name="findsABallLogic"/>
+    </group>
+    <group ns = "Visual">
+        <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
+    <include file="$(find ds4_driver)/launch/ds4_driver.launch">
+        <arg name="use_standard_msgs" value="true"/>
+    </include>
     </group>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="align_depth" value="true"/>
