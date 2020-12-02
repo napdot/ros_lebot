@@ -28,7 +28,7 @@ class Move:
         rospy.loginfo(tot)
 
     def thrower_callback(self, data):
-        self.throw_at(self, data.t1)
+        self.throw_at(data.t1)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 <launch>
     <group ns="main">
-        <node pkg="lebot" type="finds_a_ball" name="Logic(finds_a_ball)"/>
+        <node pkg="lebot" type="finds_a_ball" name="Logic"/>
     </group>
     <group ns = 'Movement'>
         <node pkg="lebot" type="theWheel" name="RosToWheel"/>

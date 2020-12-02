@@ -176,7 +176,7 @@ catkin_install_python(PROGRAMS
     #src/scripts/theBasket.py
     #src/scripts/state_machine.py
     #src/scripts/transfCamCoord.py
-    #src/scripts/tasks/finds_a_ball.py
+    src/scripts/tasks/finds_a_ball.py
     #src/scripts/movement/approachBall.py
     #src/scripts/movement/approachThrow.py
     #src/scripts/movement/findBall.py

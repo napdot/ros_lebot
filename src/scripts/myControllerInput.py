@@ -3,7 +3,7 @@
 import rospy
 from ds4_driver.msg import Report
 from lebot.msg import Wheel
-fromm lebot.msg import Thrower
+from lebot.msg import Thrower
 
 
 class Cont:
@@ -26,7 +26,7 @@ class Cont:
         self.message.w1 = 0
         self.message.w2 = 0
         self.message.w3 = 0
-        self.thrower_speed = 0
+        self.thrower_message.t1 = 0
 
         if report.dpad_up:
             self.message.w1 = self.default_speed
@@ -51,8 +51,9 @@ class Cont:
         self.controller_pub.publish(self.message)
 
         if report.button_cross:
-            self.thrower_message = self.thrower_speed
-            self.thrower_pub.publish(self.thrower_message)
+            self.thrower_message.t1 = self.thrower_speed
+
+        self.thrower_pub.publish(self.thrower_message)
 
 if __name__ == '__main__':
     rospy.init_node('controller_input', anonymous=False)
