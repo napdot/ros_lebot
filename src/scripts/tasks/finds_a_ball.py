@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import rospy
 import smach
 from lebot.msg import Wheel
-from movement.findBall import findBall as fball
+from lebotmovement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
@@ -23,7 +23,7 @@ class FINDBALL(smach.State):
         self.ball_subscriber = rospy.Suscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
         self.x, self.y, self.d = 0, 0, 0
 
-    def execute(self):  # execute(self, userdata)
+    def execute(self):
         if (self.x == 0 and self.y == 0) or self.d == 0:
             isBallFound = False
             self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
