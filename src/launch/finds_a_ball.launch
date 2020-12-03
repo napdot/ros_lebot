@@ -7,7 +7,7 @@
         </include>
     </group>
     <group ns = 'Logic'>
-        <node pkg="lebot" type="finds_a_ball.py" name="findsABallLogic"/>
+        <node pkg="lebot" type="finds_a_ball_alt.py" name="findsABallLogic"/>
     </group>
     <group ns = "Visual">
         <node pkg="lebot" type="theBall.py" name="iFindBalls"/>

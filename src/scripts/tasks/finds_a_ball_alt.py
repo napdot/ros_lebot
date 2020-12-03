@@ -19,7 +19,7 @@ class Logic():
     def __init__(self):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
-        self.basket_subscriber = rospy.Publisher('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
+        self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
         self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
 
         self.msg = Wheel()
@@ -31,6 +31,8 @@ class Logic():
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
+        self.rospy.init_node('state_machine')
+        self.rospy.spin()
 
     def execute_state(self):
         if self.current_state == 'Standby':
@@ -120,8 +122,6 @@ class Logic():
 # ______________________________________________________________________________________________________________________
 
 if __name__ == '__main__':
-    rospy.init_node('state_machine')
     IDoLogic = Logic()
     while not rospy.is_shutdown():
         IDoLogic.execute_state()
-
