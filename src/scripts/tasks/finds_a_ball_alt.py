@@ -25,17 +25,27 @@ class Logic():
         self.msg = Wheel()
         self.msg.w1, self.msg.w2, self.msg3 = 0, 0, 0
 
-        self.current_state = 'Standby'
         self.last_state = None
         self.counter = 0
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
-        self.rospy.init_node('state_machine')
-        self.rospy.spin()
 
-    def execute_state(self):
-        if self.current_state == 'Standby':
+        self.current_state = 'Standby'
+        print('A')
+
+        self.execute_state(self.current_state)
+        print('B')
+
+        rospy.spin()
+
+
+    def execute_state(self, state):
+        print('AB')
+        if self.current_state == None:
+            self.current_state = 'Standby'
+
+        if state == 'Standby':
             if self.counter == 0:
                 rospy.loginfo('State: Standby')
             findBall = self.standby_action()
@@ -45,7 +55,7 @@ class Logic():
             self.counter = self.counter + 1
             return
 
-        elif self.current_state == 'FindBall':
+        elif state == 'FindBall':
             if self.counter == 0:
                 rospy.loginfo('State: FindBall')
             getToBall = self.find_ball_action()
@@ -56,8 +66,7 @@ class Logic():
             self.counter = self.counter + 1
             return
 
-
-        elif self.current_state == 'GetToBall':
+        elif state == 'GetToBall':
             if self.counter == 0:
                 rospy.loginfo('State: GetToBall')
             atBall = self.get_to_ball_action()
@@ -68,7 +77,7 @@ class Logic():
             self.counter = self.counter + 1
             return
 
-        if self.current_state == 'Pause':
+        if state == 'Pause':
             return
 
 
@@ -85,7 +94,7 @@ class Logic():
             self.current_state = 'Pause'
 
         elif data.command == 'resume':
-            self.current_state == self.last_state
+            self.execute_state(self.last_state)
 
     # Actions to perform at each state -------------------
     def standby_action(self):
@@ -94,7 +103,8 @@ class Logic():
     def find_ball_action(self):
         if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:
             isBallFound = False
-            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
+            moveValues = fball(True)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
         else:
@@ -122,6 +132,7 @@ class Logic():
 # ______________________________________________________________________________________________________________________
 
 if __name__ == '__main__':
-    IDoLogic = Logic()
+    rospy.init_node('state_machine')
     while not rospy.is_shutdown():
-        IDoLogic.execute_state()
+        Logic()
+
