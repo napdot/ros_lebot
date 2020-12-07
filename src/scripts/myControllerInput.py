@@ -11,11 +11,7 @@ class Cont:
         self.wheelDistanceFromCenter = 10
         self.wheelAngle = [0, 120, 240]
         self.robotAngularVelocity = 10
-<<<<<<< HEAD
         self.default_speed = 70
-=======
-        self.default_speed = 10
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=10)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=10)
         self.message = Wheel()

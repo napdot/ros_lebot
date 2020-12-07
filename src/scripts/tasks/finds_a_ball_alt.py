@@ -32,16 +32,7 @@ class Logic():
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
 
         self.current_state = 'Standby'
-<<<<<<< HEAD
 
-=======
-        print('A')
-
-        self.execute_state(self.current_state)
-        print('B')
-
-        rospy.spin()
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
 
 
     def execute_state(self, state):
@@ -107,22 +98,14 @@ class Logic():
     def find_ball_action(self):
         if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:
             isBallFound = False
-<<<<<<< HEAD
             moveValues = fball(isBallFound)
-=======
-            moveValues = fball(True)
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
         else:
             isBallFound = True
-<<<<<<< HEAD
             moveValues = fball(isBallFound)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-=======
-            self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
             self.move.publish(self.msg)
             return True
 
@@ -130,22 +113,14 @@ class Logic():
         angle = calc_angle(self.ball_x)
         xP, yP = tcc(self.ball_d, angle)
         if self.ball_d > 182.5:
-<<<<<<< HEAD
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-=======
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
             self.move.publish(self.msg)
             return False
 
         else:
-<<<<<<< HEAD
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-=======
-            self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
             self.move.publish(self.msg)
             return True
 
@@ -156,13 +131,8 @@ class Logic():
 
 if __name__ == '__main__':
     rospy.init_node('state_machine')
-<<<<<<< HEAD
     fb = Logic()
     fb.current_state = 'Standby'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
-=======
-    while not rospy.is_shutdown():
-        Logic()
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
 
