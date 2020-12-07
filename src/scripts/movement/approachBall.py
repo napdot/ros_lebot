@@ -16,16 +16,17 @@ maxSpeedEnc = 190 # Serial wheels speed [-190, 190] with PID, [-255, 255] withou
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
 def distanceToBall(xBall, yBall):
-    return np.sqrt(np.square(xBall) +  np.square(yBall))
+    return np.sqrt(np.square(xBall) + np.square(yBall))
 
 # Input ball position [xBall, yBall] from camera depth
 # Output motors speed mSer = [M0, M1, M2]
 def approachBall(xBall, yBall):
     if distanceToBall(xBall, yBall) > ballMinRange:
-        m = np.dot(aKI, np.array([[xBall], [yBall], [np.arctan2(yBall, xBall)]]))
+        m = np.dot(aKI, np.array([xBall, yBall, np.arctan2(yBall, xBall)]))
         mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     else:
-        mSer = np.array([[0], [0], [0]]) # stop when approach finishes, robot is at ballMinRange distance of the ball
+        mSer = np.array([0, 0, 0])  # stop when approach finishes, robot is at ballMinRange distance of the ball
+
     return mSer
 
 """

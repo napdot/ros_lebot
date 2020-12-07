@@ -10,53 +10,94 @@ import json
 
 class Basket:
     def __init__(self, color):
-        self.red_parameters = None
-        self.blue_parameters = None
+        self.color = color
+        self.red_parameters = []
+        self.blue_parameters = []
         self.basket_location = [0, 0]
         self.basket_distance = 0
         self.basket_edges = [0, 0, 0, 0]
+
         self.set_basket_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
-        self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
-        self.mask = None
+        self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=10)
+        self.hsv = np.zeros((480, 650, 3), np.uint16)
+        self.thresh = np.zeros((480, 650, 3), np.uint16)
+        self.depth = np.zeros((480, 650, 3), np.uint16)
+        self.basket_message = Depth_BasketLocation()
+        self.kernel = np.ones((3, 3), np.uint8)
+        self.depth_bridge = CvBridge()
+        self.color_bridge = CvBridge()
 
     def get_my_image_callback(self, data):
-        bridge_img = CvBridge()
-        image = bridge_img.compressed_imgmsg_to_cv2(data, "bgr8")
-        self.get_basket_location(image)
+        try:
+            color_image = self.color_bridge.imgmsg_to_cv2(data, data.encoding)
+        except CvBridgeError as e:
+            print(e)
+            color_image = np.zeros((480, 650, 3), np.uint16)
+
+        self.hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
+        self.get_thresh()
+        return
 
     def get_my_depth_callback(self, data):
-        bridge_depth = CvBridge()
-        depth_image = bridge_depth.imgmsg_to_cv2(data, desired_encoding="passthrough")
-        self.depth_to_basket(depth_image)
+        try:
+            depth_image = self.depth_bridge.imgmsg_to_cv2(data, data.encoding)
+        except CvBridgeError as e:
+            print(e)
+            depth_image = np.zeros((480, 650, 3), np.uint16)
+
+        self.depth = depth_image
+        self.get_basket_location()
+        self.get_depth_to_basket()
+        self.update_basket_message()
         self.basket_depth_location_pub.publish(self.basket_message)
+        return
 
-    def depth_to_basket(self, depth_img):
-        selected_depth_array = depth_img * self.mask
-        # selected_depth_array = np.mean(depth_img[self.basket_edges[3]:self.basket_edges[2], self.basket_edges[1]: self.basket_edges[0]])
-        self.basket_distance = np.mean(selected_depth_array)
+    def get_thresh(self):
 
-    def basket_message(self):
-        msg = Depth_BasketLocation()
-        msg.x = self.basket_location[0]
-        msg.y = self.basket_location[1]
-        msg.d = self.basket_distance
-        return msg
+        if self.color == 'red':
+            self.thresh = cv2.inRange(self.hsv, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
+        elif self.color == 'blue':
+            self.thresh = cv2.inRange(self.hsv, tuple(self.blue_parameters['min']), tuple(self.blue_parameters['max']))
+        return
 
-    def get_basket_location(self, frame, color):
+    def get_depth_to_basket(self):
+        try:
+            self.basket_distance = np.mean(self.depth * self.thresh)
+        except:
+            self.basket_distance = 0
 
-        if color == 'red':
-            self.mask = cv2.inRange(frame, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
-        elif color == 'blue':
-            self.mask = cv2.inRange(frame, tuple(self.blue_parameters['min']), tuple(self.blue_parameters['max']))
+        if self.basket_location[0] == 0 or self.basket_location[1] == 0:
+            self.basket_distance = 0
+        return
 
-        basket_contours, hierarchy = cv2.findContours(self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        x1, y1, w, h = cv2.boundingRect(basket_contours)
-        x2, y2 = x1 + w, y1 + h
-        self.basket_edges = [x1, x2, y1, y2]
-        M = cv2.moments(basket_contours)
-        self.basket_location = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+    def update_basket_message(self):
+        self.basket_message.x = int(self.basket_location[0])
+        self.basket_message.y = int(self.basket_location[1])
+        self.basket_message.d = int(self.basket_distance)
+        return
+
+    def get_basket_location(self):
+        min_basket_area = 50
+        try:
+            _, cnt, hierarchy = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Largest contour index
+            areas = [cv2.contourArea(c) for c in cnt]
+            max_index = np.argmax(areas)
+            contour = cnt[max_index]
+            if cv2.contourArea(contour) > min_basket_area:
+                x1, y1, w, h = cv2.boundingRect(contour)
+                x2, y2 = x1 + w, y1 + h
+                self.basket_edges = [x1, x2, y1, y2]
+                M = cv2.moments(contour)
+                self.basket_location = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+            else:
+                self.basket_location = [0, 0]
+
+        except:
+            self.basket_location = [0, 0]
 
     def set_basket_parameters(self):
         try:
@@ -72,5 +113,8 @@ class Basket:
 
 if __name__ == '__main__':
     rospy.init_node('basket_calc', anonymous=False)
-    Basket('red')
+    color = rospy.get_param("basket_color")
+    Basket(color)
     rospy.spin()
+
+
