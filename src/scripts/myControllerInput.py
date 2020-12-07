@@ -17,7 +17,7 @@ class Cont:
         self.message = Wheel()
         self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=10)
         self.thrower_message = Thrower()
-        self.thrower_speed = 1000
+        self.thrower_speed = 1800
 
     def controller_callback(self, data):
         report = Report()
@@ -26,7 +26,7 @@ class Cont:
         self.message.w1 = 0
         self.message.w2 = 0
         self.message.w3 = 0
-        self.thrower_message.t1 = 0
+        self.thrower_message.t1 = 1000
 
         if report.dpad_up:
             self.message.w1 = self.default_speed
