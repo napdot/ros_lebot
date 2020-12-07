@@ -77,20 +77,24 @@ class Ball:
         radius_min = 10
         radius_max = 300
         self.ball_location = [0, 0]
-
-        im, cnts, hier = cv2.findContours(self.thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if len(cnts) != 0:
-            c = max(cnts, key=cv2.contourArea)
-            ((x, y), r) = cv2.minEnclosingCircle(c)
-            if (r < radius_max) and (r > radius_min):
-                cX = x
-                cY = y
-                cR = r
+        try:
+            im, cnts, hier = cv2.findContours(self.thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if len(cnts) != 0:
+                c = max(cnts, key=cv2.contourArea)
+                ((x, y), r) = cv2.minEnclosingCircle(c)
+                if (r < radius_max) and (r > radius_min):
+                    cX = x
+                    cY = y
+                    cR = r
+                else:
+                    cX = 0
+                    cY = 0
+                    cR = 0
             else:
                 cX = 0
                 cY = 0
                 cR = 0
-        else:
+        except:
             cX = 0
             cY = 0
             cR = 0

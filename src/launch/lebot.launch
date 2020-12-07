@@ -4,7 +4,6 @@
     <node pkg="lebot" type="state_machine_alt.py" name="GameLogic"/>
     <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
     <node pkg="lebot" type="theBasket.py" name="iFindBasket"/>
-    <node pkg="lebot" type="referee.py" name="RefSignals"/>
     <param name="basket_color" type="string" value="blue"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="align_depth" value="true"/>

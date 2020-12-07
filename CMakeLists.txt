@@ -58,10 +58,7 @@ add_message_files(
   Depth_BasketLocation.msg
   Wheel.msg
   Thrower.msg
-<<<<<<< HEAD
   Ref_Command.msg
-=======
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
 )
 
 ## Generate services in the 'srv' folder
@@ -173,26 +170,20 @@ include_directories(
 catkin_install_python(PROGRAMS
     src/scripts/theWheel.py
     src/scripts/myControllerInput.py
-    #src/scripts/calcAngle.py
+    src/scripts/calcAngle.py
     #src/scripts/ball_srv.py
     #src/scripts/basket_srv.py
     #src/scripts/referee.py
-    #src/scripts/theBall.py
-    #src/scripts/theBasket.py
-    #src/scripts/state_machine.py
-    #src/scripts/transfCamCoord.py
+    src/scripts/theBall.py
+    src/scripts/theBasket.py
+    src/scripts/state_machine.py
+    src/scripts/state_machine_alt.py
+    src/scripts/transfCamCoord.py
     src/scripts/tasks/finds_a_ball.py
-<<<<<<< HEAD
     src/scripts/movement/approachBall.py
     src/scripts/movement/approachThrow.py
     src/scripts/movement/findBall.py
     src/scripts/movement/findBasket.py
-=======
-    #src/scripts/movement/approachBall.py
-    #src/scripts/movement/approachThrow.py
-    #src/scripts/movement/findBall.py
-    #src/scripts/movement/findBasket.py
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
 
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

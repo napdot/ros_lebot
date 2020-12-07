@@ -9,7 +9,7 @@ from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from movement.findBasket import findBasket as fbasket
 from movement.approachThrow import approachThrow
-from movement.throwerCalculation import throwerCalculation
+from movement.throwerCalculation import thrower_calculation
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
 from lebot.msg import Depth_BallLocation
