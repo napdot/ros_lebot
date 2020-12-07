@@ -8,8 +8,11 @@ from st_msgs.msg import String
 class Signal:
     def __init__(self):
         self.ws_client.Subscriber('/ref_signal', String(), signal_callback())
+        self.ref_signals.Publisher('/referee', String(), signal_callback())
 
-    def signal_callback(self):
+    def signal_callback(self, data):
+
+
 
 
 

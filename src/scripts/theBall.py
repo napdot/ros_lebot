@@ -113,9 +113,6 @@ class Ball:
                 self.green_parameters = d['green']
         except:
             self.green_parameters = {"min": [51, 131, 0], "max": [81, 226, 255]}
-
-        # Erase this next line. This are not values from the court.
-        self.green_parameters = {"min": [40, 55, 0], "max": [88, 255, 54]}
         return
 
 
