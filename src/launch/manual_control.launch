@@ -1,9 +1,0 @@
-<launch>
-    <group ns = 'Movement'>
-        #<node pkg="lebot" type="myControllerInput.py" name="ControllerToRos" />
-        <node pkg="lebot" type="theWheel.py" name="RosToWheel"/>
-    </group>
-    <include file="$(find ds4_driver)/launch/ds4_driver.launch">
-        <arg name="use_standard_msgs" value="true" />
-    </include>
-</launch>

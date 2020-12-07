@@ -1,2 +1,0 @@
-# Referee Command
-string command
