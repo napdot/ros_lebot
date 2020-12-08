@@ -55,11 +55,14 @@ class Basket:
         return
 
     def get_thresh(self):
-
+        kernel = np.ones((3, 3), np.uint8)
         if self.color == 'red':
-            self.thresh = cv2.inRange(self.hsv, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
+            thresh = cv2.inRange(self.hsv, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
         elif self.color == 'blue':
-            self.thresh = cv2.inRange(self.hsv, tuple(self.blue_parameters['min']), tuple(self.blue_parameters['max']))
+            thresh = cv2.inRange(self.hsv, tuple(self.blue_parameters['min']), tuple(self.blue_parameters['max']))
+
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        self.thresh = cv2.dilate(thresh, kernel, iterations=1)
         return
 
     def get_depth_to_basket(self):
@@ -81,8 +84,7 @@ class Basket:
     def get_basket_location(self):
         min_basket_area = 50
         try:
-            _, cnt, hierarchy = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            # Largest contour index
+            cnt = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             areas = [cv2.contourArea(c) for c in cnt]
             max_index = np.argmax(areas)
             contour = cnt[max_index]
@@ -92,7 +94,6 @@ class Basket:
                 self.basket_edges = [x1, x2, y1, y2]
                 M = cv2.moments(contour)
                 self.basket_location = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-
             else:
                 self.basket_location = [0, 0]
 

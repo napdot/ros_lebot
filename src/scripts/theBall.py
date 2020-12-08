@@ -52,14 +52,17 @@ class Ball:
         return
 
     def get_thresh(self):
-        self.thresh = cv2.inRange(self.hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
+        kernel = np.ones((3, 3), np.uint8)
+        thresh = cv2.inRange(self.hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, np.ones)
+        self.thresh = cv2.dilate(thresh, kernel, iterations=1)
         return
 
     def get_depth_to_ball(self):
         try:
-            self.ball_distance = np.mean(self.depth * self.thresh)
-            #thresh_depth_array = self.depth * self.thresh
-            #self.ball_distance = np.mean(thresh_depth_array[x1:x2, y1:y2])
+            selection_mask = np.zeros(480, 650, 3)
+            cv2.circle(selection_mask, self.ball_location, self.ball_radius, (255, 255, 255), -1)
+            self.ball_distance = np.mean(cv2.bitwise_and(selection_mask, self.depth))
         except:
             self.ball_distance = 0
 
@@ -73,19 +76,17 @@ class Ball:
         self.ball_message.d = int(self.ball_distance)
         return
 
+
     def get_ball_location(self):
-        radius_min = 10
-        radius_max = 300
+        area_min = 30
         self.ball_location = [0, 0]
         try:
-            im, cnts, hier = cv2.findContours(self.thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             if len(cnts) != 0:
                 c = max(cnts, key=cv2.contourArea)
-                ((x, y), r) = cv2.minEnclosingCircle(c)
-                if (r < radius_max) and (r > radius_min):
-                    cX = x
-                    cY = y
-                    cR = r
+                area = cv2.contourArea(c)
+                if area > area_min:
+                    ((cX, cY), cR) = cv2.minEnclosingCircle(c)
                 else:
                     cX = 0
                     cY = 0
