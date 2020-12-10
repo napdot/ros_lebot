@@ -4,6 +4,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import rospy
+from std_msgs.msg import String
 from lebot.msg import Wheel
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
@@ -23,9 +24,12 @@ class Logic:
     def __init__(self):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.throw = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
+        self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
         self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
         self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
         self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
+
+        self.state_string = String()
 
         self.thrower_msg = Thrower()
         self.msg = Wheel()
@@ -41,12 +45,17 @@ class Logic:
 
 
     def execute_state(self, state):
+        self.pub_state_string()
+
+        if self.counter >= 100:
+            self.current_state = 'Standby'
+            self.counter = 0
+            return
+
         if state == 'Pause':
             return
 
         if state == 'Standby':  # Changes to findBall state.
-            if self.counter == 0:
-                rospy.loginfo('State: Standby')
             findBall = self.standby_action()
             if findBall:
                 self.current_state = 'FindBall'
@@ -55,8 +64,6 @@ class Logic:
             return
 
         elif state == 'FindBall':   # Rotation until a ball is detected.
-            if self.counter == 0:
-                rospy.loginfo('State: FindBall')
             getToBall = self.find_ball_action()
             if getToBall:
                 self.current_state = 'GetToBall'
@@ -66,19 +73,15 @@ class Logic:
             return
 
         elif state == 'GetToBall':  # Move towards ball until a certain distance
-            if self.counter == 0:
-                rospy.loginfo('State: GetToBall')
             atBall = self.get_to_ball_action()
             if atBall:
-                self.current_state = 'Standby'
+                self.current_state = 'ImAtBall'
                 self.counter = 0
 
             self.counter = self.counter + 1
             return
 
         elif state == 'ImAtBall':   # Rotate around ball until basket is found
-            if self.counter == 0:
-                rospy.loginfo('State: ImAtBall')
             haveBasket = self.im_at_ball_action()
             if haveBasket:
                 self.current_state = 'Go'
@@ -87,18 +90,12 @@ class Logic:
             return
 
         elif state == 'Go':     # Move and set thrower speed until ball out of range.
-            if self.counter == 0:
-                rospy.loginfo('State: Go')
             haveThrow = self.go_action()
             if haveThrow:
                 self.current_state = 'FindBall'
                 self.counter = 0
             self.counter = self.counter + 1
             return
-
-        if self.counter > 5000:
-            self.counter = 0
-            self.current_state = 'Standby'
 
     # Callback from subscriptions
     def ball_callback(self, data):
@@ -114,6 +111,10 @@ class Logic:
 
         elif data.command == 'resume':
             self.execute_state(self.last_state)
+
+    def pub_state_string(self):
+        self.state_string.data = str(self.current_state)
+        self.state_pub.publish(self.state_string)
 
     # Actions to perform at each state -------------------
     def standby_action(self):
@@ -136,7 +137,13 @@ class Logic:
     def get_to_ball_action(self):
         angle = calc_angle(self.ball_x)
         xP, yP = tcc(self.ball_d, angle)
-        if self.ball_d > 182.5:
+        if self.ball_d < 182.5:
+            moveValues = approachBall(xP, yP)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return True
+
+        elif 20 < self.ball_d <182.5:
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
@@ -146,7 +153,7 @@ class Logic:
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            return True
+            return False
 
     def im_at_ball_action(self):
         if (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:
