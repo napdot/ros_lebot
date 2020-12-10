@@ -9,13 +9,15 @@ import json
 
 
 class Basket:
-    def __init__(self, color):
+    def __init__(self, color, alt_dist):
         self.color = color
         self.red_parameters = []
         self.blue_parameters = []
         self.basket_location = [0, 0]
         self.basket_distance = 0
         self.basket_edges = [0, 0, 0, 0]
+
+        self.alt_dist = alt_dist
 
         self.set_basket_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
@@ -42,12 +44,11 @@ class Basket:
 
     def get_my_depth_callback(self, data):
         try:
-            depth_image = self.depth_bridge.imgmsg_to_cv2(data, data.encoding)
+            self.depth = np.array(self.depth_bridge.imgmsg_to_cv2(data, desired_encoding="passthrough"), dtype=np.float32)
         except CvBridgeError as e:
             print(e)
-            depth_image = np.zeros((480, 650, 3), np.uint16)
+            self.depth = np.zeros((480, 650), np.float32)
 
-        self.depth = depth_image
         self.get_basket_location()
         self.get_depth_to_basket()
         self.update_basket_message()
@@ -66,10 +67,17 @@ class Basket:
         return
 
     def get_depth_to_basket(self):
+        self.basket_distance = 0
         try:
             self.basket_distance = np.mean(self.depth * self.thresh)
         except:
             self.basket_distance = 0
+
+        if self.alt_dist:
+            try:
+                self.basket_distance = self.depth[int(self.basket_location[1]), int(self.basket_location[0])]
+            except:
+                self.basket_distance = 0
 
         if self.basket_location[0] == 0 or self.basket_location[1] == 0:
             self.basket_distance = 0
@@ -93,7 +101,16 @@ class Basket:
                 x2, y2 = x1 + w, y1 + h
                 self.basket_edges = [x1, x2, y1, y2]
                 M = cv2.moments(contour)
-                self.basket_location = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                cX, cY =(int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                if cX > 480:
+                    cX = 480
+                if cX < 0:
+                    cX = 0
+                if cY > 640:
+                    xY = 640
+                if cY < 0:
+                    cY = 0
+                self.basket_distance = [cX, cY]
             else:
                 self.basket_location = [0, 0]
 
@@ -115,7 +132,7 @@ class Basket:
 if __name__ == '__main__':
     rospy.init_node('basket_calc', anonymous=False)
     color = rospy.get_param("basket_color")
-    Basket(color)
+    Basket(color, alt_dist=True)
     rospy.spin()
 
 

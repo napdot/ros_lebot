@@ -6,21 +6,25 @@ import numpy as np
 from lebot.msg import Depth_BallLocation
 import cv2
 import json
+import math
 
 
 class Ball:
-    def __init__(self):
+    def __init__(self, alt_dist):
         self.green_parameters = []
         self.ball_location = [0, 0]
         self.ball_distance = 0
         self.ball_radius = 0
+
+        self.alt_dist = alt_dist
+
         self.set_ball_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
         self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=10)
-        self.hsv = np.zeros((480, 650, 3), np.uint16)
-        self.thresh = np.zeros((480, 650, 3), np.uint16)
-        self.depth = np.zeros((480, 650, 3), np.uint16)
+        self.hsv = np.zeros((480, 650, 3), dtype=np.float32)
+        self.thresh = np.zeros((480, 650, 3), dtype=np.float32)
+        self.depth = np.zeros((480, 650, 3), dtype=np.float32)
         self.ball_message = Depth_BallLocation()
         self.kernel = np.ones((3, 3), np.uint8)
         self.depth_bridge = CvBridge()
@@ -39,12 +43,12 @@ class Ball:
 
     def get_my_depth_callback(self, data):
         try:
-            depth_image = self.depth_bridge.imgmsg_to_cv2(data, data.encoding)
+            self.depth = np.array(self.depth_bridge.imgmsg_to_cv2(data, desired_encoding="passthrough"), dtype=np.float32)
         except CvBridgeError as e:
             print(e)
-            depth_image = np.zeros((480, 650, 3), np.uint16)
+            self.depth = np.zeros((480, 650), np.float32)
 
-        self.depth = depth_image
+
         self.get_ball_location()
         self.get_depth_to_ball()
         self.update_ball_message()
@@ -54,21 +58,36 @@ class Ball:
     def get_thresh(self):
         kernel = np.ones((3, 3), np.uint8)
         thresh = cv2.inRange(self.hsv, tuple(self.green_parameters['min']), tuple(self.green_parameters['max']))
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, np.ones)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         self.thresh = cv2.dilate(thresh, kernel, iterations=1)
         return
 
     def get_depth_to_ball(self):
+        """"
         try:
-            selection_mask = np.zeros(480, 650, 3)
-            cv2.circle(selection_mask, self.ball_location, self.ball_radius, (255, 255, 255), -1)
-            self.ball_distance = np.mean(cv2.bitwise_and(selection_mask, self.depth))
+            selection_mask = np.zeros((480, 640), dtype=np.float32)
+            if self.ball_radius != 0:
+                selection_mask = self.make_circle(selection_mask, int(self.ball_location[0]), int(self.ball_location[1]), int(self.ball_radius) + 2)
+            self.ball_distance = np.mean(selection_mask * self.depth)
         except:
             self.ball_distance = 0
+        """
+        self.ball_distance = 0
+        try:
+            self.ball_distance = np.mean(self.thresh * self.depth)
+        except:
+            self.ball_distance = 0
+
+        if self.alt_dist:
+            try:
+                self.ball_distance = self.depth[int(self.ball_location[1]), int(self.ball_location[0])]
+            except:
+                self.ball_distance = 0
 
         if self.ball_location[0] == 0 or self.ball_location[1] == 0:
             self.ball_distance = 0
         return
+
 
     def update_ball_message(self):
         self.ball_message.x = int(self.ball_location[0])
@@ -76,9 +95,8 @@ class Ball:
         self.ball_message.d = int(self.ball_distance)
         return
 
-
     def get_ball_location(self):
-        area_min = 30
+        area_min = 10
         self.ball_location = [0, 0]
         try:
             cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -104,13 +122,6 @@ class Ball:
         self.ball_radius = cR
         return
 
-    def get_area_of_interest(self):
-        x1 = self.ball_location[0] - self.ball_radius
-        x2 = self.ball_location[0] - self.ball_radius
-        y1 = self.ball_location[1] - self.ball_radius
-        y2 = self.ball_location[0] - self.ball_radius
-        return int(x1), int(x2), int(y1), int(y2)
-
     def set_ball_parameters(self):
         try:
             with open('color_parameters.json') as f:
@@ -120,9 +131,19 @@ class Ball:
             self.green_parameters = {"min": [51, 131, 0], "max": [81, 226, 255]}
         return
 
+    def dist(self, x1, y1, x2, y2):
+        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+    def make_circle(self, arr, cx, cy, r):
+        for x in range(cx - r, cx + r):
+            for y in range(cy - r, cy + r):
+                if self.dist(cx, cy, x, y) <= r:
+                    arr[x][y] = 1
+        return arr
+
 
 if __name__ == '__main__':
     rospy.init_node('ball_calc', anonymous=False)
-    Ball()
+    Ball(alt_dist=True)
     rospy.spin()
 

@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   smach_ros
   std_msgs
   message_generation
+  rqt_image_view
 )
 
 ## System dependencies are found with CMake's conventions
@@ -113,7 +114,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lebot
-  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy smach std_msgs message_runtime
+  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy smach std_msgs message_runtime rqt_image_view
 #  DEPENDS system_lib
 )
 
