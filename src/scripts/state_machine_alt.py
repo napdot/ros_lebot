@@ -53,6 +53,7 @@ class Logic:
             return
 
         if state == 'Pause':
+            self.counter = 0
             return
 
         if state == 'Standby':  # Changes to findBall state.
@@ -105,12 +106,13 @@ class Logic:
         self.basket_x, self.basket_y, self.basket_d = data.x, data.y, data.d
 
     def referee_callback(self, data):
-        self.last_state = self.current_state
-        if data.command == 'pause':
+        command_string = data.command
+        if command_string == 'pause':
             self.current_state = 'Pause'
 
-        elif data.command == 'resume':
-            self.execute_state(self.last_state)
+        elif command_string == 'resume':
+            self.current_state = 'Standby'
+            self.execute_state(self.current_state)
 
     def pub_state_string(self):
         self.state_string.data = str(self.current_state)
@@ -170,9 +172,13 @@ class Logic:
             return True
 
     def go_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:     # Ball got lost
+        if self.ball_x == 0 and self.ball_y == 0:   # Ball got lost
             return True
-        elif self.ball_y < 330:     # Actual movement and throwing.
+        if self.ball_y < 400:   # ball not in throwing range. Might be unnecessary.
+            return False
+        if (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:    # Basket got lost
+            return True
+        else:     # Actual movement and throwing.
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
             throwerValue = throwerCalculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
@@ -180,8 +186,6 @@ class Logic:
             self.move.publish(self.msg)
             self.throw.publish(self.thrower_msg)
             return False
-        else:   # ball somewhere else
-            return True
 
     def pause_action(self):
         pass
@@ -190,8 +194,10 @@ class Logic:
 
 if __name__ == '__main__':
     rospy.init_node('state_machine')
+    r = rospy.Rate(30)
     fb = Logic()
-    fb.current_state = 'Standby'
+    fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
+        r.sleep
 
