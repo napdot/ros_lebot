@@ -1,138 +1,61 @@
 <html>
-  <head>
-    <script type="text/javascript" src="http://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/rosjs/ros.min.js"></script>
-    <script type="text/javascript">
-      function main() {
-      var signal;
-      var target;
-      var basket;
-
-      var connection = new ros.Connection("ws://hostname:9090");
-      function pub(signal , target, basket){
-          connection.publish('/referee', 'lebot/Ref_Command', '{"signal": "' + signal + '"}, {"target": "' + target + '"}, "color": "' + signal + '"}')
-      }
-
-      connection.setOnClose(function (e) {
-      document.write('connection closed<br/>');
-      });
-      connection.setOnError(function (e) {
-      document.write('error!<br/>');
-      });
-      connection.setOnOpen(function (e) {
-      document.write('connected to ROS<br/>');
-      });
-      document.addEventListener('message', function(event){
-          event.data
-
-      })
-      }
-    </script>
-  </head>
-  <body onload="main()">
-  </body>
-</html>
-
-
-
-<!DOCTYPE html>
-<html>
 <head>
-<meta charset="utf-8" />
+   <script type="text/javascript" src="http://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/rosjs/ros.min.js"></script>
+   <script language = "javascript" type = "text/javascript">
+      var wsAddr = "ws://hostname:8080";
+      var localAddr = "ws://localhost:9090";
+      var topicName = "/referee"
 
-<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+      function init() {
+         output = document.getElementById("output");
+         initWebSocket();
+         initRosConnection();
+      }
+      function initRosConnection(){
+        rosconnection = new ros.Connection(localAddr);
 
-<script type="text/javascript" type="text/javascript">
-  var ros = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
-  });
+        rosconnection.setOnOpen(function(e) {
+          document.write('Connected to Ros<br/>')
+        });
+        rosconnection.setOnClose(function(e){
+          document.write("Ros connection closed<br/>")
+        });
+        rosconnection.setOnError(function (e){
+          document.write("Ros connection error<br/>")
+        });
+      }
+      function initWebSocket() {
+         websocket = new WebSocket(wsAddr);
 
-  ros.on('connection', function() {
-    console.log('Connected to websocket server.');
-  });
+         websocket.onopen = function(e) {
+           document.write("Websocket connection open<br/>")
+         };
 
-  ros.on('error', function(error) {
-    console.log('Error connecting to websocket server: ', error);
-  });
+         websocket.onmessage = function(e) {
+            document.write("New websocket message<br/>")
+           onMessage(e)
+         };
 
-  ros.on('close', function() {
-    console.log('Connection to websocket server closed.');
-  });
+         websocket.onerror = function(evt) {
+           document.write("Websocket error<br/>")
+         };
+         websocket.onclose = function(evt) {
+           document.write('Websocket closed<br/>')
+         }
+      }
+      function onMessage(e) {
+        var jsString = JSON.stringify(e);
+        pubRos(jsString);
+      }
 
-  // Publishing a Topic
-  // ------------------
+      function pubRos(e) {
+        rosconnection.publish('/referee', 'std_msgs/String', e);
+        document.write("Publish to topic " + topicName + " successfully<br/>")
+      }
 
-  var refSignal = new ROSLIB.Topic({
-    ros : ros,
-    name : '/referee',
-    messageType : 'lebot/Ref_Command'
-  });
-
-  var refMsg = new ROSLIB.Message({
-    linear : {
-      x : 0.1,
-      y : 0.2,
-      z : 0.3
-    },
-    angular : {
-      x : -0.1,
-      y : -0.2,
-      z : -0.3
-    }
-  });
-  refSignal.publish(refMsg);
-
-  // Subscribing to a Topic
-  // ----------------------
-
-  var listener = new ROSLIB.Topic({
-    ros : ros,
-    name : '/listener',
-    messageType : 'std_msgs/String'
-  });
-
-  listener.subscribe(function(message) {
-    console.log('Received message on ' + listener.name + ': ' + message.data);
-    listener.unsubscribe();
-  });
-
-  // Calling a service
-  // -----------------
-
-  var addTwoIntsClient = new ROSLIB.Service({
-    ros : ros,
-    name : '/add_two_ints',
-    serviceType : 'rospy_tutorials/AddTwoInts'
-  });
-
-  var request = new ROSLIB.ServiceRequest({
-    a : 1,
-    b : 2
-  });
-
-  addTwoIntsClient.callService(request, function(result) {
-    console.log('Result for service call on '
-      + addTwoIntsClient.name
-      + ': '
-      + result.sum);
-  });
-
-  // Getting and setting a param value
-  // ---------------------------------
-
-  ros.getParams(function(params) {
-    console.log(params);
-  });
-
-  var maxVelX = new ROSLIB.Param({
-    ros : ros,
-    name : 'max_vel_y'
-  });
-
-  maxVelX.set(0.8);
-  maxVelX.get(function(value) {
-    console.log('MAX VAL: ' + value);
-  });
-</script>
-</head>
+   </script>
+   </head>
+<body onload="init()">
+<div id = "output"></div>
+</body>
 </html>
