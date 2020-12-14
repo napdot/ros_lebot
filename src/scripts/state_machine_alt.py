@@ -145,7 +145,7 @@ class Logic:
             self.move.publish(self.msg)
             return True
 
-        elif 20 < self.ball_d <182.5:
+        elif 20 < self.ball_d < 182.5:
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
@@ -160,7 +160,7 @@ class Logic:
     def im_at_ball_action(self):
         if (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:
             isBasketFound = False
-            moveValues = fball(isBasketFound)
+            moveValues = fbasket(isBasketFound)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
@@ -172,19 +172,17 @@ class Logic:
             return True
 
     def go_action(self):
-        if self.ball_x == 0 and self.ball_y == 0:   # Ball got lost
+        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d < 250):   # Ball got lost or ball too far
             return True
-        if self.ball_y < 400:   # ball not in throwing range. Might be unnecessary.
-            return False
-        if (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:    # Basket got lost
+        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:    # Basket got lost
             return True
         else:     # Actual movement and throwing.
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
-            throwerValue = throwerCalculation(self.basket_d)
+            throwerValue = thrower_calculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
+            self.throw.publish(self.thrower_msg)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            self.throw.publish(self.thrower_msg)
             return False
 
     def pause_action(self):
