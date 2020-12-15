@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
     <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script type="text/javascript" type="text/javascript">
+    var refTopic = "/js_ref";
     var ros = new ROSLIB.Ros({
         url : "ws://localhost:9090"
     });
@@ -19,7 +20,7 @@
 
     var refTopic = new ROSLIB.Topic({
       ros: ros,
-      name: '/referee',
+      name: refTopic,
       messageType: 'std_msgs/String'
     });
 
@@ -27,16 +28,16 @@
     websocket.onopen = function(e) {
         document.getElementById("action").innerHTML = 'Websocket connection open'
     };
-    websocket.addEventListener('Message', function(e) {
-        document.getElementById("action").innerHTML = 'New websocket message'
-        onMessage(e.data)
-    });
     websocket.onerror = function(e) {
         document.getElementById("action").innerHTML = 'Websocket error'
     };
     websocket.onclose = function(e) {
         document.getElementById("action").innerHTML = 'Websocket closed'
     }
+    websocket.addEventListener('Message', function(e) {
+        document.getElementById("action").innerHTML = 'New websocket message'
+        onMessage(e.data)
+    });
 
     function onMessage(e) {
         let jsString = JSON.stringify(e);
@@ -49,7 +50,7 @@
         });
         refTopic.publish(RefMessage);
         document.getElementById("msg").innerHTML = e.data;
-      }
+    }
 
 </script>
 </head>
