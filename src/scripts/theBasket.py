@@ -129,10 +129,13 @@ class Basket:
             self.blue_parameters ={"min": [99, 119, 64], "max": [118, 255, 175]}
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # Need to have color get_param in loop for updating from signal.
     rospy.init_node('basket_calc', anonymous=False)
+    myRate = rospy.get_param('lebot_rate')
+    rate = rospy.Rate(myRate)
     color = rospy.get_param("basket_color")
     Basket(color, alt_dist=True)
+    rate.sleep()
     rospy.spin()
 
 

@@ -57,6 +57,9 @@ class Cont:
 
 if __name__ == '__main__':
     rospy.init_node('controller_input', anonymous=False)
+    myRate = rospy.get_param('lebot_rate')
+    rate = rospy.Rate(myRate)
     theC = Cont()
+    rate.sleep()
     rospy.spin()
 

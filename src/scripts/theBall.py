@@ -144,6 +144,9 @@ class Ball:
 
 if __name__ == '__main__':
     rospy.init_node('ball_calc', anonymous=False)
+    myRate = rospy.get_param('lebot_rate')
+    rate = rospy.Rate(myRate)
     Ball(alt_dist=True)
+    rate.sleep()
     rospy.spin()
 

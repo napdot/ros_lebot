@@ -33,5 +33,8 @@ class Move:
 
 if __name__ == '__main__':
     rospy.init_node('vruum', anonymous=False)
+    myRate = rospy.get_param('lebot_rate')
+    rate = rospy.Rate(myRate)
     IWhoMoves = Move()
+    rate.sleep()
     rospy.spin()

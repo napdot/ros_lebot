@@ -27,7 +27,7 @@ class Logic:
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
         self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
         self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
-        self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
+        self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=5)
 
         self.state_string = String()
 
@@ -192,10 +192,11 @@ class Logic:
 
 if __name__ == '__main__':
     rospy.init_node('state_machine')
-    r = rospy.Rate(30)
+    myRate = rospy.get_param('lebot_rate')
+    rate = rospy.Rate(myRate)
     fb = Logic()
-    fb.current_state = 'Pause'
+    fb.current_state = 'Standby'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
-        r.sleep
+        rate.sleep()
 

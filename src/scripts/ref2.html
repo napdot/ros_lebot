@@ -4,9 +4,10 @@
 <meta charset="utf-8" />
     <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script type="text/javascript" type="text/javascript">
+
     var refTopic = "/js_ref";
     var ros = new ROSLIB.Ros({
-        url : "ws://localhost:9090"
+        url : "localhost:9090"
     });
     ros.on('connection', function(){
         document.getElementById("status").innerHTML = "Connected";
@@ -24,7 +25,7 @@
       messageType: 'std_msgs/String'
     });
 
-    websocket = new WebSocket(wsAddr);
+    var websocket = new WebSocket('ws://127.0.0.1:1234');
     websocket.onopen = function(e) {
         document.getElementById("action").innerHTML = 'Websocket connection open'
     };
