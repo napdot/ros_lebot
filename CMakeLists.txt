@@ -186,6 +186,7 @@ catkin_install_python(PROGRAMS
     src/scripts/movement/approachThrow.py
     src/scripts/movement/findBall.py
     src/scripts/movement/findBasket.py
+    src/scripts/ref2.html
 
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -216,8 +217,7 @@ catkin_install_python(PROGRAMS
 #   # myfile1
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
+# )`
 #############
 ## Testing ##
 #############

@@ -6,6 +6,7 @@ import numpy as np
 from lebot.msg import Depth_BasketLocation
 import cv2
 import json
+import os
 
 
 class Basket:
@@ -119,14 +120,17 @@ class Basket:
 
     def set_basket_parameters(self):
         try:
-            with open('color_parameters.json') as f:
+            dir = '../test_lebot/src/lebot/src/scripts/color_parameters.json'
+            with open(dir) as f:
                 d = json.load(f)
                 self.red_parameters = d['red']
                 self.blue_parameters = d['blue']
+                rospy.loginfo('Basket masking parameters set')
 
         except:
             self.red_parameters = {"min": [151, 98, 87], "max": [179, 232, 214]}
             self.blue_parameters ={"min": [99, 119, 64], "max": [118, 255, 175]}
+            rospy.logwarn("Error reading json - Using defaults (Basket)")
 
 
 if __name__ == '__main__':  # Need to have color get_param in loop for updating from signal.

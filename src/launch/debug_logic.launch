@@ -2,9 +2,12 @@
     <node pkg="lebot" type="state_machine_alt.py" name="GameLogic"/>
     <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
     <node pkg="lebot" type="theBasket.py" name="iFindBasket"/>
+    <node pkg="lebot" type="referee.py" name="iAndRef"/>
     <param name="basket_color" type="string" value="blue"/>
     <param name="lebot_rate" type="int" value="27"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="align_depth" value="true"/>
+    </include>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
     </include>
 </launch>

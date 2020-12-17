@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 import rospy
 from std_msgs.msg import String
 from lebot.msg import Ref_Command
 import json
-
+import webbrowser
 
 class Signal:
     def __init__(self):
-        self.ws_client.Subscriber('/js_ref', String(), self.signal_callback, queue_size=10)
-        self.ref_signals.Publisher('/referee', Ref_Command(), queue_size=10)
+        self.ws_client = rospy.Subscriber('/js_ref', String, self.signal_callback, queue_size=10)
+        self.ref_signals = rospy.Publisher('/referee', Ref_Command, queue_size=10)
 
-    def signal_callback(self, data):
-        ref_obj = json.loads(data)
+        # !!! This path is so ugly.
+        webbrowser.open_new('../test_lebot/src/lebot/src/scripts/ref2.html')
+
+    def signal_callback(self, string):
+        ref_string = string.data
+        ref_obj = json.loads(ref_string)
         targets = ref_obj['targets']
         try:    # if target.index returns error, means that we are not on target list and don't need to change anything.
             index = targets.index('LeBot')
@@ -27,7 +34,6 @@ class Signal:
                 self.ref_signals.publish(cm)
         except:
             pass
-
 
 if __name__ == '__main__':
     rospy.init_node('ref', anonymous=False)

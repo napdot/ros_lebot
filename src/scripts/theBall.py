@@ -7,6 +7,7 @@ from lebot.msg import Depth_BallLocation
 import cv2
 import json
 import math
+import os
 
 
 class Ball:
@@ -124,10 +125,14 @@ class Ball:
 
     def set_ball_parameters(self):
         try:
-            with open('color_parameters.json') as f:
+            dir = '../test_lebot/src/lebot/src/scripts/color_parameters.json'
+            with open(dir) as f:
                 d = json.load(f)
                 self.green_parameters = d['green']
+                rospy.loginfo('Ball masking parameters set')
+
         except:
+            rospy.logwarn("Error reading json - Using defaults (Ball)")
             self.green_parameters = {"min": [51, 131, 0], "max": [81, 226, 255]}
         return
 
