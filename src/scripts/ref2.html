@@ -2,20 +2,26 @@
 <html>
 <head>
 <meta charset="utf-8" />
-    <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-    <script type="text/javascript" type="text/javascript">
+    <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+    <script type = "text/javascript">
 
     var refTopic = "/js_ref";
+    var websocketAddr = "ws://127.0.0.1:8000"
+    var RosAddr = "ws://localhost:9090"
     var ros = new ROSLIB.Ros({
-        url : "localhost:9090"
+        url : RosAddr
     });
     ros.on('connection', function(){
         document.getElementById("status").innerHTML = "Connected";
+        document.getElementById("action").innerHTML = "Connection to ROS established"
     });
     ros.on('error', function(error){
         document.getElementById("status").innerHTML = "Error:";
+        document.getElementById("action").innerHTML = "Error with ROS connection."
     });
     ros.on('close', function() {
+        document.getElementById("action").innerHTML = "Closed connection to ROS."
         document.getElementById("status").innerHTML = "Closed";
      });
 
@@ -25,7 +31,7 @@
       messageType: 'std_msgs/String'
     });
 
-    var websocket = new WebSocket('ws://127.0.0.1:1234');
+    var websocket = new WebSocket(websocketAddr);
     websocket.onopen = function(e) {
         document.getElementById("action").innerHTML = 'Websocket connection open'
     };
@@ -50,16 +56,17 @@
             data : e
         });
         refTopic.publish(RefMessage);
+        document.getElementById("action").innerHTML = "Published message"
         document.getElementById("msg").innerHTML = e.data;
     }
-
 </script>
 </head>
 
 <body>
   <h1>Lebot</h1>
-  <p>Connection status: <span id="status"></span></p>
+  <p>Ros connection status: <span id="status"></span></p>
   <p>Last messaged published: <span id="msg"></span></p>
-  <p>Current action: <span id="action"></span></p>
+  <p>Latest action: <span id="action"></span></p>
+  <span>Websocket status: <span id="ws_status"></span></span></p>
 </body>
 </html>
