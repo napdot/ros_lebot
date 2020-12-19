@@ -84,8 +84,7 @@ class Basket:
         return
 
     def update_basket_message(self):
-        self.basket_message.x = int(self.basket_location[0])
-        self.basket_message.y = int(self.basket_location[1])
+        self.basket_message.x, self.basket_message.y = self.transform_location(self.basket_location)
         self.basket_message.d = int(self.basket_distance)
         return
 
@@ -128,6 +127,11 @@ class Basket:
             self.red_parameters = {"min": [151, 98, 87], "max": [179, 232, 214]}
             self.blue_parameters ={"min": [99, 119, 64], "max": [118, 255, 175]}
             rospy.logwarn("Error reading json - Using defaults (Basket)")
+
+    def transform_location(self, loc):
+        tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
+        ty = int(640 - loc[1])
+        return tx, ty
 
 
 if __name__ == '__main__':  # Need to have color get_param in loop for updating from signal.

@@ -64,15 +64,6 @@ class Ball:
         return
 
     def get_depth_to_ball(self):
-        """"
-        try:
-            selection_mask = np.zeros((480, 640), dtype=np.float32)
-            if self.ball_radius != 0:
-                selection_mask = self.make_circle(selection_mask, int(self.ball_location[0]), int(self.ball_location[1]), int(self.ball_radius) + 2)
-            self.ball_distance = np.mean(selection_mask * self.depth)
-        except:
-            self.ball_distance = 0
-        """
         self.ball_distance = 0
         try:
             self.ball_distance = np.mean(self.thresh * self.depth)
@@ -91,8 +82,7 @@ class Ball:
 
 
     def update_ball_message(self):
-        self.ball_message.x = int(self.ball_location[0])
-        self.ball_message.y = int(self.ball_location[1])
+        self.ball_message.x, self.ball_message.y = self.transform_location(self.ball_location)
         self.ball_message.d = int(self.ball_distance)
         return
 
@@ -136,15 +126,10 @@ class Ball:
             self.green_parameters = {"min": [51, 131, 0], "max": [81, 226, 255]}
         return
 
-    def dist(self, x1, y1, x2, y2):
-        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-
-    def make_circle(self, arr, cx, cy, r):
-        for x in range(cx - r, cx + r):
-            for y in range(cy - r, cy + r):
-                if self.dist(cx, cy, x, y) <= r:
-                    arr[x][y] = 1
-        return arr
+    def transform_location(self, loc):
+        tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
+        ty = int(640 - loc[1])
+        return tx, ty
 
 
 if __name__ == '__main__':
