@@ -6,6 +6,7 @@ from lebot.msg import Wheel
 from lebot.msg import Thrower
 from scipy.interpolate import interp1d
 import numpy as np
+from omni import omni_to_serial as ots
 
 
 class Cont:
@@ -57,8 +58,10 @@ class Cont:
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
 
-        #elif (133 > report.left_analog_x > 123) or (133 > report.left_analog_y > 123):
-        #    self.message.w1, self.message.w2, self.message.w3 = self.joy_to_omni(report.left_analog_x, report.left_analog_x)
+        if not ((138 > report.left_analog_x > 118) and (138 > report.left_analog_y > 118)):
+            y_interp = np.interp(report.left_analog_y, [0, 255], [-self.default_speed, self.default_speed])
+            x_interp = np.interp(report.left_analog_x, [0, 255], [-self.default_speed, self.default_speed])
+            self.message.w1, self.message.w2, self.message.w3 = ots(y_interp, x_interp)
 
         self.controller_pub.publish(self.message)
 
@@ -66,15 +69,6 @@ class Cont:
             self.thrower_message.t1 = self.thrower_speed
 
         self.thrower_pub.publish(self.thrower_message)
-
-    def joy_to_omni(self, x, y):
-        m = interp1d([-self.maxSpeedEnc, self.maxSpeedEnc], [0, 255])
-        x_val = m(x)
-        y_val = m(y)
-        aKI = np.array([[np.sqrt(3) / 3, 1 / 3, 1 / 3], [-np.sqrt(3) / 3, 1 / 3, 1 / 3], [0, -2 / 3, 1 / 3]])
-        m = np.dot(aKI, np.array([x_val, y_val, np.arctan2(x_val, y_val)]))
-        mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), 190), 0.2))
-        return int(mSer[0]), int(mSer[1]), int(mSer[2])
 
 
 
