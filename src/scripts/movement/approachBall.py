@@ -21,12 +21,17 @@ def distanceToBall(xBall, yBall):
 # Input ball position [xBall, yBall] from camera depth
 # Output motors speed mSer = [M0, M1, M2]
 def approachBall(xBall, yBall):
+    """
     if distanceToBall(xBall, yBall) > ballMinRange:
         m = np.dot(aKI, np.array([xBall, yBall, np.arctan2(yBall, xBall)]))
         mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     else:
         mSer = np.array([0, 0, 0])  # stop when approach finishes, robot is at ballMinRange distance of the ball
 
+    return mSer
+    """
+    m = np.dot(aKI, np.array([xBall, yBall, np.arctan2(yBall, xBall)]))
+    mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     return mSer
 
 """
