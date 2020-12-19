@@ -27,7 +27,7 @@ class Logic:
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
         self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
         self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
-        self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=5)
+        self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
 
         self.state_string = String()
 
@@ -140,7 +140,7 @@ class Logic:
         angle = calc_angle(self.ball_x)
         xP, yP = tcc(self.ball_d, angle)
         if self.ball_d < 182.5:
-            moveValues = approachBall(xP, yP)
+            moveValues = (xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return True

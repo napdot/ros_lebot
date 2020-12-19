@@ -20,9 +20,9 @@ class Ball:
         self.alt_dist = alt_dist
 
         self.set_ball_parameters()
-        self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback)
-        self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback)
-        self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=10)
+        self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
+        self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback, queue_size=1)
+        self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=1)
         self.hsv = np.zeros((480, 650, 3), dtype=np.float32)
         self.thresh = np.zeros((480, 650, 3), dtype=np.float32)
         self.depth = np.zeros((480, 650, 3), dtype=np.float32)
