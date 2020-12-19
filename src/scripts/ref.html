@@ -1,0 +1,64 @@
+<html>
+<head>
+   <script type="text/javascript" src="http://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/rosjs/ros.min.js"></script>
+   <script type = "text/javascript">
+      const wsAddr = "ws://hostname:8080";
+      const localAddr = "ws://localhost:9090";
+      const topicName = "/referee"
+
+      function init() {
+         output = document.getElementById("output");
+         initWebSocket();
+         initRosConnection();
+      }
+
+      function initRosConnection(){
+        rosconnection = new ros.Connection(localAddr);
+
+        rosconnection.setOnOpen(function(e) {
+          document.write('Connected to Ros<br/>')
+        });
+        rosconnection.setOnClose(function(e){
+          document.write("Ros connection closed<br/>")
+        });
+        rosconnection.setOnError(function (e){
+          document.write("Ros connection error<br/>")
+        });
+      }
+
+      function initWebSocket(){
+         websocket = new WebSocket(wsAddr);
+
+         websocket.onopen = function(e) {
+           document.write("Websocket connection open<br/>")
+         };
+
+         websocket.addEventListener('Message', function(e) {
+           document.write("New websocket message<br/>")
+           onMessage(e.data)
+         });
+
+         websocket.onerror = function(e) {
+           document.write("Websocket error<br/>")
+         };
+
+         websocket.onclose = function(e) {
+           document.write('Websocket closed<br/>')
+         }
+      }
+
+      function onMessage(e) {
+        let jsString = JSON.stringify(e);
+        pubRos(jsString);
+      }
+
+      function pubRos(e) {
+        rosconnection.publish('/referee', 'std_msgs/String', '{"data":"' + e + '"}')
+        document.write("Publish to topic " + topicName + " successfully<br/>")
+      }
+   </script>
+   </head>
+<body onload="init()">
+<div id = "output"></div>
+</body>
+</html>

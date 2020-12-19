@@ -1,2 +1,2 @@
 # Thrower speed
-int8 t1
+int32 t1

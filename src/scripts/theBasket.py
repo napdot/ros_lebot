@@ -16,7 +16,6 @@ class Basket:
         self.blue_parameters = []
         self.basket_location = [0, 0]
         self.basket_distance = 0
-        self.basket_edges = [0, 0, 0, 0]
 
         self.alt_dist = alt_dist
 
@@ -91,32 +90,30 @@ class Basket:
         return
 
     def get_basket_location(self):
-        min_basket_area = 50
+        min_basket_area = 30
         try:
             cnt = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-            areas = [cv2.contourArea(c) for c in cnt]
-            max_index = np.argmax(areas)
+            areas = []
+            max_index = -1
+            max_area = 0
+            for index, c in enumerate(cnt):
+                area_of_cnt = cv2.contourArea(c)
+                areas.append(area_of_cnt)
+                if area_of_cnt > max_area:
+                    max_area = area_of_cnt
+                    max_index = index
             contour = cnt[max_index]
-            if cv2.contourArea(contour) > min_basket_area:
-                x1, y1, w, h = cv2.boundingRect(contour)
-                x2, y2 = x1 + w, y1 + h
-                self.basket_edges = [x1, x2, y1, y2]
+            if (cv2.contourArea(contour) > min_basket_area) and (len(cnt) > 0):
                 M = cv2.moments(contour)
-                cX, cY =(int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-                if cX > 480:
-                    cX = 480
-                if cX < 0:
-                    cX = 0
-                if cY > 640:
-                    xY = 640
-                if cY < 0:
-                    cY = 0
-                self.basket_distance = [cX, cY]
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                self.basket_location = [cX, cY]
             else:
                 self.basket_location = [0, 0]
 
         except:
             self.basket_location = [0, 0]
+
 
     def set_basket_parameters(self):
         try:

@@ -14,12 +14,12 @@ class Cont:
         self.wheelAngle = [0, 120, 240]
         self.robotAngularVelocity = 10
         self.default_speed = 70
-        self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=10)
-        self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=10)
+        self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=1)
+        self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.message = Wheel()
-        self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=10)
+        self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.thrower_message = Thrower()
-        self.thrower_speed = 1800
+        self.thrower_speed = 1000
         self.maxSpeedEnc = 190
 
     def controller_callback(self, data):
@@ -30,6 +30,12 @@ class Cont:
         self.message.w2 = 0
         self.message.w3 = 0
         self.thrower_message.t1 = 1000
+	
+        if report.button_square:
+            self.thrower_speed = self.thrower_speed + 1
+
+        elif report.button_circle:
+            self.thrower_speed = self.thrower_speed - 1
 
         if report.dpad_up:
             self.message.w1 = self.default_speed
@@ -51,8 +57,8 @@ class Cont:
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
 
-        elif (133 > report.left_analog_x > 123) or (133 > report.left_analog_y > 123):
-            self.message.w1, self.message.w2, self.message.w3 = self.joy_to_omni(report.left_analog_x, report.left_analog_x)
+        #elif (133 > report.left_analog_x > 123) or (133 > report.left_analog_y > 123):
+        #    self.message.w1, self.message.w2, self.message.w3 = self.joy_to_omni(report.left_analog_x, report.left_analog_x)
 
         self.controller_pub.publish(self.message)
 
@@ -74,9 +80,6 @@ class Cont:
 
 if __name__ == '__main__':
     rospy.init_node('controller_input', anonymous=False)
-    myRate = rospy.get_param('lebot_rate')
-    rate = rospy.Rate(myRate)
     theC = Cont()
-    rate.sleep()
     rospy.spin()
 

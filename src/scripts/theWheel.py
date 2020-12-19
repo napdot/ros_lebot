@@ -11,8 +11,8 @@ class Move:
                                  bytesize=serial.EIGHTBITS,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
 
-        self.wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback)
-        self.thrower_sub = rospy.Subscriber("/thrower_values", Thrower, self.thrower_callback)
+        self.wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback, queue_size=1)
+        self.thrower_sub = rospy.Subscriber("/thrower_values", Thrower, self.thrower_callback, queue_size=1)
 
     def move_to(self, w1, w2, w3):
         sot = ("sd:{0}:{1}:{2}\n".format(w1, w2, w3))
@@ -33,8 +33,5 @@ class Move:
 
 if __name__ == '__main__':
     rospy.init_node('vruum', anonymous=False)
-    myRate = rospy.get_param('lebot_rate')
-    rate = rospy.Rate(myRate)
     IWhoMoves = Move()
-    rate.sleep()
     rospy.spin()
