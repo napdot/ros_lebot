@@ -21,7 +21,7 @@ from lebot.msg import Thrower
 # ______________________________________________________________________________________________________________________
 
 class Logic:
-    def __init__(self):
+    def __init__(self, min_dist):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.throw = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
@@ -43,6 +43,8 @@ class Logic:
 
         self.current_state = None
 
+        self.min_ball_dist = min_dist
+
 
     def execute_state(self, state):
         self.pub_state_string()
@@ -57,16 +59,16 @@ class Logic:
             return
 
         if state == 'Standby':  # Changes to findBall state.
-            findBall = self.standby_action()
-            if findBall:
+            next = self.standby_action()
+            if next:
                 self.current_state = 'FindBall'
                 self.counter = 0
             self.counter = self.counter + 1
             return
 
         elif state == 'FindBall':   # Rotation until a ball is detected.
-            getToBall = self.find_ball_action()
-            if getToBall:
+            next = self.find_ball_action()
+            if next:
                 self.current_state = 'GetToBall'
                 self.counter = 0
 
@@ -74,8 +76,8 @@ class Logic:
             return
 
         elif state == 'GetToBall':  # Move towards ball until a certain distance
-            atBall = self.get_to_ball_action()
-            if atBall:
+            next = self.get_to_ball_action()
+            if next:
                 self.current_state = 'ImAtBall'
                 self.counter = 0
 
@@ -83,17 +85,17 @@ class Logic:
             return
 
         elif state == 'ImAtBall':   # Rotate around ball until basket is found
-            haveBasket = self.im_at_ball_action()
-            if haveBasket:
+            next = self.im_at_ball_action()
+            if next:
                 self.current_state = 'Go'
                 self.counter = 0
             self.counter = self.counter + 1
             return
 
         elif state == 'Go':     # Move and set thrower speed until ball out of range.
-            haveThrow = self.go_action()
-            if haveThrow:
-                self.current_state = 'FindBall'
+            next = self.go_action()
+            if next:
+                self.current_state = 'Standby'
                 self.counter = 0
             self.counter = self.counter + 1
             return
@@ -118,64 +120,77 @@ class Logic:
         self.state_string.data = str(self.current_state)
         self.state_pub.publish(self.state_string)
 
-    # Actions to perform at each state -------------------
+    """
+     ___Actions to perform at each state___
+     Return True to proceed to next state (self.wheel_stop() too)
+     Return False to stay on same state
+     Return False and self.current = new_state to change to specific state (Reset counter too)
+    """
+
     def standby_action(self):
         return True
 
     def find_ball_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:
-            isBallFound = False
-            moveValues = fball(isBallFound)
+        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:     # No ball in sight
+            moveValues = fball()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
-        else:
-            isBallFound = True
-            moveValues = fball(isBallFound)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
+        else:   # Ball in sight.
+            self.wheel_stop()
             return True
 
     def get_to_ball_action(self):
-        angle = calc_angle(self.ball_x)
+        angle = calc_angle(self.ball_x, self.ball_d)
         xP, yP = tcc(self.ball_d, angle)
-        if self.ball_d < 182.5:
-            moveValues = (xP, yP)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
-            return True
 
-        elif 20 < self.ball_d < 182.5:
+        if self.ball_d > self.min_ball_dist:    # Not yet near ball
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
 
-        else:
-            moveValues = approachBall(xP, yP)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
+        elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
+            self.wheel_stop()
+            return True
+
+        else:   # Ball lost
+            self.current_state = 'FindBall'
+            self.counter = 0
             return False
 
     def im_at_ball_action(self):
-        if (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:
-            isBasketFound = False
-            moveValues = fbasket(isBasketFound)
+        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:     # Ball lost
+            self.current_state = 'FindBall'
+            self.counter = 0
+            return False
+
+        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0: # Finding basket
+            moveValues = fbasket()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
-        else:
-            isBasketFound = True
-            moveValues = fball(isBasketFound)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
+
+        else:   # Basket and ball found
+            self.wheel_stop()
             return True
 
-    def go_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d < 250):   # Ball got lost or ball too far
-            return True
+    def go_action(self):    # Need some sort of memory.
+        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d == 0):   # Ball lost
+            self.current_state = 'FindBall'
+            self.counter = 0
+            return False
+
+        elif (self.ball_d > self.min_ball_dist + 200):  # Ball to far
+            self.current_state = 'GetToBall'
+            self.counter = 0
+            return False
+
         elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:    # Basket got lost
-            return True
+            self.current_state = 'ImAtBall'
+            self.counter = 0
+            return False
+
         else:     # Actual movement and throwing.
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
             throwerValue = thrower_calculation(self.basket_d)
@@ -183,10 +198,15 @@ class Logic:
             self.throw.publish(self.thrower_msg)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            return False
+            return True
 
     def pause_action(self):
         pass
+
+    def wheel_stop(self):
+        self.msg.w1, self.msg.w2, self.msg.w3 = int(0), int(0), int(0)
+        self.move.publish(self.msg)
+
 
 # ______________________________________________________________________________________________________________________
 
@@ -194,9 +214,8 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic()
-    fb.current_state = 'Standby'
+    fb = Logic(min_dist=182)
+    fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
         rate.sleep()
-
