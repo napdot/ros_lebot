@@ -37,6 +37,7 @@ class Logic:
 
         self.last_state = None
         self.counter = 0
+        self.throwing_counter = 0   # Must figure a way to avoid using it on GO state
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
@@ -175,7 +176,24 @@ class Logic:
             self.wheel_stop()
             return True
 
-    def go_action(self):    # Need some sort of memory.
+    def go_action(self):
+        # Figure some efficient way.
+        if self.throwing_counter > 27:  # Equal to 1 sec.
+            self.throwing_counter = 0
+            return True
+
+        else:
+            moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
+            throwerValue = thrower_calculation(self.basket_d)
+            self.thrower_msg.t1 = int(throwerValue)
+            self.throw.publish(self.thrower_msg)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            self.throwing_counter = self.throwing_counter + 1
+            return False
+
+
+    def go_action_alt(self):    # Doesn't work because at some point we lost the ball when too near...
         if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d == 0):   # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
@@ -191,14 +209,14 @@ class Logic:
             self.counter = 0
             return False
 
-        else:     # Actual movement and throwing.
+        else:   # Actual movement and throwing.
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
             throwerValue = thrower_calculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            return True
+            return False
 
     def pause_action(self):
         pass
