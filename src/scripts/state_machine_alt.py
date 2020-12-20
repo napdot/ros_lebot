@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import rospy
@@ -17,6 +18,7 @@ from lebot.msg import Depth_BallLocation
 from lebot.msg import Depth_BasketLocation
 from lebot.msg import Ref_Command
 from lebot.msg import Thrower
+
 
 # ______________________________________________________________________________________________________________________
 
@@ -37,7 +39,7 @@ class Logic:
 
         self.last_state = None
         self.counter = 0
-        self.throwing_counter = 0   # Must figure a way to avoid using it on GO state
+        self.throwing_counter = 0  # Must figure a way to avoid using it on GO state
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
@@ -46,11 +48,11 @@ class Logic:
 
         self.min_ball_dist = min_dist
 
-
     def execute_state(self, state):
-        self.pub_state_string()
+        if self.counter == 0:
+            self.pub_state_string()
 
-        if self.counter >= 100:
+        if self.counter >= 81:  # In case something gates stuck, reset to standby. 3s
             self.current_state = 'Standby'
             self.counter = 0
             return
@@ -67,7 +69,7 @@ class Logic:
             self.counter = self.counter + 1
             return
 
-        elif state == 'FindBall':   # Rotation until a ball is detected.
+        elif state == 'FindBall':  # Rotation until a ball is detected.
             next = self.find_ball_action()
             if next:
                 self.current_state = 'GetToBall'
@@ -85,7 +87,7 @@ class Logic:
             self.counter = self.counter + 1
             return
 
-        elif state == 'ImAtBall':   # Rotate around ball until basket is found
+        elif state == 'ImAtBall':  # Rotate around ball until basket is found
             next = self.im_at_ball_action()
             if next:
                 self.current_state = 'Go'
@@ -93,7 +95,7 @@ class Logic:
             self.counter = self.counter + 1
             return
 
-        elif state == 'Go':     # Move and set thrower speed until ball out of range.
+        elif state == 'Go':  # Move and set thrower speed until ball out of range.
             next = self.go_action()
             if next:
                 self.current_state = 'Standby'
@@ -123,7 +125,7 @@ class Logic:
 
     """
      ___Actions to perform at each state___
-     Return True to proceed to next state (self.wheel_stop() too)
+     Return True to proceed to next state
      Return False to stay on same state
      Return False and self.current = new_state to change to specific state (Reset counter too)
     """
@@ -132,48 +134,45 @@ class Logic:
         return True
 
     def find_ball_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:     # No ball in sight
+        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:  # No ball in sight
             moveValues = fball()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
-        else:   # Ball in sight.
-            self.wheel_stop()
+        else:  # Ball in sight.
             return True
 
     def get_to_ball_action(self):
         angle = calc_angle(self.ball_x, self.ball_d)
         xP, yP = tcc(self.ball_d, angle)
 
-        if self.ball_d > self.min_ball_dist:    # Not yet near ball
+        if self.ball_d > self.min_ball_dist:  # Not yet near ball
             moveValues = approachBall(xP, yP)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
 
         elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
-            self.wheel_stop()
             return True
 
-        else:   # Ball lost
+        else:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
             return False
 
     def im_at_ball_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:     # Ball lost
+        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
             return False
 
-        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0: # Finding basket
+        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:  # Finding basket
             moveValues = fbasket()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False
 
-        else:   # Basket and ball found
-            self.wheel_stop()
+        else:  # Basket and ball found
             return True
 
     def go_action(self):
@@ -192,24 +191,23 @@ class Logic:
             self.throwing_counter = self.throwing_counter + 1
             return False
 
-
-    def go_action_alt(self):    # Doesn't work because at some point we lost the ball when too near...
-        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d == 0):   # Ball lost
+    def go_action_alt(self):  # Doesn't work because at some point we lost the ball when too near...
+        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d == 0):  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
             return False
 
-        elif (self.ball_d > self.min_ball_dist + 200):  # Ball to far
+        elif (self.ball_d > self.min_ball_dist + 200):  # Ball too far
             self.current_state = 'GetToBall'
             self.counter = 0
             return False
 
-        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:    # Basket got lost
+        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:  # Basket got lost
             self.current_state = 'ImAtBall'
             self.counter = 0
             return False
 
-        else:   # Actual movement and throwing.
+        else:  # Actual movement and throwing.
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
             throwerValue = thrower_calculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
