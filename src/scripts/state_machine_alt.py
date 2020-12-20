@@ -127,7 +127,7 @@ class Logic:
      ___Actions to perform at each state___
      Return True to proceed to next state
      Return False to stay on same state
-     Return False and self.current = new_state to change to specific state (Reset counter too)
+     Return False and self.current = new_state to change to specific state (Remember to reset counter)
     """
 
     def standby_action(self):
