@@ -49,13 +49,11 @@ class Logic:
         self.min_ball_dist = min_dist
 
     def execute_state(self, state):
-        if self.counter == 0:
-            self.pub_state_string()
+        self.pub_state_string()
 
-        if self.counter >= 81:  # In case something gates stuck, reset to standby. 3s
+        if self.counter >= 81 and state != "Pause":
             self.current_state = 'Standby'
             self.counter = 0
-            return
 
         if state == 'Pause':
             self.counter = 0
@@ -66,6 +64,7 @@ class Logic:
             if next:
                 self.current_state = 'FindBall'
                 self.counter = 0
+                return
             self.counter = self.counter + 1
             return
 
@@ -74,7 +73,7 @@ class Logic:
             if next:
                 self.current_state = 'GetToBall'
                 self.counter = 0
-
+                return
             self.counter = self.counter + 1
             return
 
@@ -83,7 +82,7 @@ class Logic:
             if next:
                 self.current_state = 'ImAtBall'
                 self.counter = 0
-
+                return
             self.counter = self.counter + 1
             return
 
@@ -92,6 +91,7 @@ class Logic:
             if next:
                 self.current_state = 'Go'
                 self.counter = 0
+                return
             self.counter = self.counter + 1
             return
 
@@ -100,6 +100,7 @@ class Logic:
             if next:
                 self.current_state = 'Standby'
                 self.counter = 0
+                return
             self.counter = self.counter + 1
             return
 
@@ -120,7 +121,7 @@ class Logic:
             self.execute_state(self.current_state)
 
     def pub_state_string(self):
-        self.state_string.data = str(self.current_state)
+        self.state_string.data = str(self.counter) + " : " + str(self.current_state)
         self.state_pub.publish(self.state_string)
 
     """
@@ -134,7 +135,7 @@ class Logic:
         return True
 
     def find_ball_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:  # No ball in sight
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
             moveValues = fball()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
@@ -143,30 +144,32 @@ class Logic:
             return True
 
     def get_to_ball_action(self):
-        angle = calc_angle(self.ball_x, self.ball_d)
-        xP, yP = tcc(self.ball_d, angle)
-
-        if self.ball_d > self.min_ball_dist:  # Not yet near ball
-            moveValues = approachBall(xP, yP)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
-            return False
-
-        elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
-            return True
-
-        else:  # Ball lost
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
             self.current_state = 'FindBall'
             self.counter = 0
             return False
+
+        else:
+            angle = calc_angle(self.ball_x, self.ball_d)
+            xP, yP = tcc(self.ball_d, angle)
+            if self.ball_d > self.min_ball_dist:  # Not yet near ball
+                moveValues = approachBall(xP, yP)
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False
+
+            elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
+                return True
+
+
 
     def im_at_ball_action(self):
-        if (self.ball_x == 0 and self.ball_y == 0) or self.ball_d == 0:  # Ball lost
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
             return False
 
-        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:  # Finding basket
+        elif (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Finding basket
             moveValues = fbasket()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
@@ -192,7 +195,7 @@ class Logic:
             return False
 
     def go_action_alt(self):  # Doesn't work because at some point we lost the ball when too near...
-        if (self.ball_x == 0 and self.ball_y == 0) or (self.ball_d == 0):  # Ball lost
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
             return False
@@ -202,7 +205,7 @@ class Logic:
             self.counter = 0
             return False
 
-        elif (self.basket_x == 0 and self.basket_y == 0) or self.basket_d == 0:  # Basket got lost
+        elif (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket got lost
             self.current_state = 'ImAtBall'
             self.counter = 0
             return False
@@ -226,11 +229,16 @@ class Logic:
 
 # ______________________________________________________________________________________________________________________
 
+# No ball = (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
+# No basket = (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
+
+# rostopic pub /referee lebot/Ref_Command "{'command':'resume'}"
+
 if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=182)
+    fb = Logic(min_dist=190)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)

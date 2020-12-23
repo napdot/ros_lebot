@@ -82,18 +82,20 @@ class Ball:
 
 
     def update_ball_message(self):
-        self.ball_message.x, self.ball_message.y = self.transform_location(self.ball_location)
+        x, y = self.transform_location(self.ball_location)
+        self.ball_message.x, self.ball_message.y = int(x), int(y)
         self.ball_message.d = int(self.ball_distance)
         return
 
     def get_ball_location(self):
-        area_min = 10
+        area_min = 20
         self.ball_location = [0, 0]
         try:
             cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             if len(cnts) != 0:
                 c = max(cnts, key=cv2.contourArea)
                 area = cv2.contourArea(c)
+                rospy.logwarn(area)
                 if area > area_min:
                     ((cX, cY), cR) = cv2.minEnclosingCircle(c)
                 else:
@@ -128,7 +130,7 @@ class Ball:
 
     def transform_location(self, loc):
         tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
-        ty = int(640 - loc[1])
+        ty = int(480 - loc[1])
         return tx, ty
 
 

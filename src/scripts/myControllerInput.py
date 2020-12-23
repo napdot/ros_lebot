@@ -7,6 +7,7 @@ from lebot.msg import Thrower
 from scipy.interpolate import interp1d
 import numpy as np
 from omni import omni_to_serial as ots
+#from movement.approachBall import approachBall as ots
 
 
 class Cont:
@@ -15,6 +16,7 @@ class Cont:
         self.wheelAngle = [0, 120, 240]
         self.robotAngularVelocity = 10
         self.default_speed = 70
+        self.controller_max_speed = 50
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=1)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.message = Wheel()
@@ -58,10 +60,11 @@ class Cont:
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
 
-        if not ((138 > report.left_analog_x > 118) and (138 > report.left_analog_y > 118)):
-            y_interp = np.interp(report.left_analog_y, [0, 255], [-self.default_speed, self.default_speed])
-            x_interp = np.interp(report.left_analog_x, [0, 255], [-self.default_speed, self.default_speed])
-            self.message.w1, self.message.w2, self.message.w3 = ots(y_interp, x_interp)
+        if not ((138 > report.left_analog_x > 118) and (138 > (255-report.left_analog_y) > 118)):
+            y_interp = np.interp((255-report.left_analog_y), [0, 255], [-self.controller_max_speed, self.controller_max_speed])
+            x_interp = np.interp(report.left_analog_x, [0, 255], [-self.controller_max_speed, self.controller_max_speed])
+            w1, w2, w3 = ots(y_interp, x_interp)
+            self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
 
         self.controller_pub.publish(self.message)
 

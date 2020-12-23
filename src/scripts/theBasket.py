@@ -130,7 +130,7 @@ class Basket:
 
     def transform_location(self, loc):
         tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
-        ty = int(640 - loc[1])
+        ty = int(480 - loc[1])
         return tx, ty
 
 
