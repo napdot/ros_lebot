@@ -14,6 +14,7 @@ from movement.findBasket import findBasket as fbasket
 from movement.approachThrow import approachThrow
 from movement.throwerCalculation import thrower_calculation
 from movement.alignThrow import align_throw
+from omni import omni_to_serial as ots
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
 from lebot.msg import Depth_BallLocation
@@ -94,11 +95,20 @@ class Logic:
         elif state == 'ImAtBall':  # Rotate around ball until basket is found
             next = self.im_at_ball_action()
             if next:
-                self.current_state = 'Go'
+                self.current_state = 'Align'
                 self.counter = 0
                 return
             self.counter = self.counter + 1
             return
+
+        elif state == 'Align':
+            next = self.align_action()
+            if next:
+                self.current_state = 'Go'
+                self.counter = 0
+                return
+            self.counter = self.counter + 1
+
 
         elif state == 'Go':  # Move and set thrower speed until ball out of range.
             next = self.go_action()
@@ -214,6 +224,17 @@ class Logic:
             self.move.publish(self.msg)
             self.throwing_counter = self.throwing_counter + 1
             return False
+
+    def align_action(self):
+        if (not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0) and not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
+            coord = align_throw(self.ball_x, self.ball)
+            moveValues = ots(coord[0], coord[1])
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            if abs(coord[0]) < self.distance_offset and abs(coord[1]) < self.distance_offset:
+                return True
+            return False
+        self.current_state = 'FindBall'
+        return False
 
     def go_action_alt(self):  # Doesn't work because at some point we lost the ball when too near...
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
