@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import rospy
 from std_msgs.msg import String
 from lebot.msg import Wheel
+from movement.orientObject import orient
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from movement.findBasket import findBasket as fbasket
@@ -23,7 +24,7 @@ from lebot.msg import Thrower
 # ______________________________________________________________________________________________________________________
 
 class Logic:
-    def __init__(self, min_dist):
+    def __init__(self, min_dist, rate):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.throw = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
@@ -47,11 +48,14 @@ class Logic:
         self.current_state = None
 
         self.min_ball_dist = min_dist
+        self.orientation_offset = 15
+        self.distance_offset = 40
+        self.rate = rate
 
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= 81 and state != "Pause":
+        if self.counter >= (self.rate * 3) and state != "Pause":
             self.current_state = 'Standby'
             self.counter = 0
 
@@ -149,6 +153,12 @@ class Logic:
             self.counter = 0
             return False
 
+        if abs(self.ball_x) > self.orientation_offset:
+            moveValues = orient(self.ball_x)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False
+
         else:
             angle = calc_angle(self.ball_x, self.ball_d)
             xP, yP = tcc(self.ball_d, angle)
@@ -161,12 +171,16 @@ class Logic:
             elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
                 return True
 
-
-
     def im_at_ball_action(self):
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
+            return False
+
+        if abs(self.ball_x) > self.orientation_offset:
+            moveValues = orient(self.ball_x)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
             return False
 
         elif (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Finding basket
@@ -180,9 +194,15 @@ class Logic:
 
     def go_action(self):
         # Figure some efficient way.
-        if self.throwing_counter > 27:  # Equal to 1 sec.
+        if self.throwing_counter > self.rate:
             self.throwing_counter = 0
             return True
+
+        if abs(self.basket_x) > self.orientation_offset:
+            moveValues = orient(self.ball_x)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False
 
         else:
             moveValues = approachThrow(self.ball_x, self.ball_y, self.basket_x, self.basket_y)
@@ -200,7 +220,7 @@ class Logic:
             self.counter = 0
             return False
 
-        elif (self.ball_d > self.min_ball_dist + 200):  # Ball too far
+        elif self.ball_d > (self.min_ball_dist + self.distance_offset):  # Ball too far
             self.current_state = 'GetToBall'
             self.counter = 0
             return False
@@ -238,7 +258,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=190)
+    fb = Logic(min_dist=190, rate=myRate)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
