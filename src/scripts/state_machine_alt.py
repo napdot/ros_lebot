@@ -228,10 +228,10 @@ class Logic:
     def align_action(self):
         if (not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0) and not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
             coord = align_throw(self.ball_x, self.ball)
-            moveValues = ots(coord[0], coord[1])
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             if abs(coord[0]) < self.distance_offset and abs(coord[1]) < self.distance_offset:
                 return True
+            moveValues = ots(coord[0], coord[1])
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             return False
         self.current_state = 'FindBall'
         return False
