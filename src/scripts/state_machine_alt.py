@@ -227,13 +227,18 @@ class Logic:
 
     def align_action(self):
         if (not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0) and not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
-            coord = align_throw(self.ball_x, self.ball)
+            ball_angle = calc_angle(self.ball_x, self.ball_d)
+            ball_xP, ball_yP = tcc(self.ball_d, ball_angle)
+            basket_angle = calc_angle(self.basket_x, self.basket_d)
+            basket_xP, basket_yP = tcc(self.basket_d, basket_angle)
+            coord = align_throw(ball_xP, ball_yP, basket_xP, basket_yP)
             if abs(coord[0]) < self.distance_offset and abs(coord[1]) < self.distance_offset:
                 return True
             moveValues = ots(coord[0], coord[1])
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             return False
         self.current_state = 'FindBall'
+        self.counter = 0
         return False
 
     def go_action_alt(self):  # Doesn't work because at some point we lost the ball when too near...
