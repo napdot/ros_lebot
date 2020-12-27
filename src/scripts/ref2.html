@@ -56,8 +56,24 @@
             data : e
         });
         refTopic.publish(RefMessage);
-        document.getElementById("action").innerHTML = "Published message"
+        document.getElementById("action").innerHTML = "Published message";
         document.getElementById("msg").innerHTML = e.data;
+    }
+    function resumeButtonFunction(e) {
+        document.getElementById("action").innerHTML = "Resume button pressed";
+        let RefMessage = new ROSLIB.Message({
+            data: "{'signal':'start','targets':['Lebot'],'baskets':['magenta']}"
+         });
+        refTopic.publish(RefMessage);
+        document.getElementById("msg").innerHTML = "{'signal':'start','targets':['Lebot'],'baskets':['magenta']}";
+    }
+    function pauseButtonFunction(e) {
+        document.getElementById("action").innerHTML = "Pause button pressed";
+        let RefMessage = new ROSLIB.Message({
+            data: "{'signal':'stop','targets':['Lebot']}"
+         });
+        refTopic.publish(RefMessage);
+        document.getElementById("msg").innerHTML = "{'signal':'stop','targets':['Lebot']}";
     }
 </script>
 </head>
@@ -67,6 +83,8 @@
   <p>Ros connection status: <span id="status"></span></p>
   <p>Last messaged published: <span id="msg"></span></p>
   <p>Latest action: <span id="action"></span></p>
-  <span>Websocket status: <span id="ws_status"></span></span></p>
+  <p>Websocket status: <span id="ws_status"></span></p>
+  <p><button id="resumeButton" type="button" onclick="resumeButtonFunction()">Resume</button></p>
+  <p><button id="pauseButton" type="button" onclick="pauseButtonFunction()">Pause</button></p>
 </body>
 </html>
