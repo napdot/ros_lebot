@@ -26,7 +26,7 @@ from lebot.msg import Thrower
 # ______________________________________________________________________________________________________________________
 
 class Logic:
-    def __init__(self, min_dist, rate):
+    def __init__(self, min_dist, node_rate):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.throw = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
@@ -52,7 +52,7 @@ class Logic:
         self.min_ball_dist = min_dist
         self.orientation_offset = 15
         self.distance_offset = 40
-        self.rate = rate
+        self.rate = node_rate
 
     def execute_state(self, state):
         self.pub_state_string()
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=190, rate=myRate)
+    fb = Logic(min_dist=450, node_rate=myRate)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)

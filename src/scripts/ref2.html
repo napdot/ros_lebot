@@ -7,7 +7,7 @@
     <script type = "text/javascript">
 
     var refTopic = "/js_ref";
-    var websocketAddr = "ws://127.0.0.1:8000"
+    var websocketAddr = "ws://demos.kaazing.com/echo"
     var RosAddr = " ws://0.0.0.0:9090"
     var ros = new ROSLIB.Ros({
         url : RosAddr
@@ -41,10 +41,10 @@
     websocket.onclose = function(e) {
         document.getElementById("action").innerHTML = 'Websocket closed'
     }
-    websocket.addEventListener('Message', function(e) {
+    websocket.onmessage = function(e) {
         document.getElementById("action").innerHTML = 'New websocket message'
         onMessage(e.data)
-    });
+    };
 
     function onMessage(e) {
         let jsString = JSON.stringify(e);
