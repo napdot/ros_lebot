@@ -13,7 +13,8 @@ aKI = np.array([[np.sqrt(3)/3, 1/3, 1/3], [-np.sqrt(3)/3, 1/3, 1/3], [0, -2/3, 1
 maxSpeedEnc = 190 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
-def findBasket(found):
+def findBasket():
+    """
     if not(found):
         # TODO
         # create logic to choose direction of rotation 1 (counterclockwise) or -1 (clockwise) depending on robot position in the court
@@ -22,6 +23,11 @@ def findBasket(found):
         mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     else:
         mSer = np.array([[0], [0], [0]]) # stop when the basket is found
+    return mSer
+    """
+    rotation = 1
+    m = np.dot(aKI, np.array([[1], [0], [rotation]]))
+    mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     return mSer
 
 """

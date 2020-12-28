@@ -13,8 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   smach
+  smach_ros
   std_msgs
   message_generation
+  rqt_image_view
+  rosbridge_server
 )
 
 ## System dependencies are found with CMake's conventions
@@ -24,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+#catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -56,14 +59,16 @@ add_message_files(
   Depth_BallLocation.msg
   Depth_BasketLocation.msg
   Wheel.msg
+  Thrower.msg
+  Ref_Command.msg
 )
 
 ## Generate services in the 'srv' folder
-add_service_files(
- FILES
- ball.srv
- basket.srv
-)
+#add_service_files(
+# FILES
+# ball.srv
+# basket.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -110,7 +115,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lebot
-  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy smach std_msgs message_runtime
+  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy smach std_msgs message_runtime rqt_image_view rosbridge_server
 #  DEPENDS system_lib
 )
 
@@ -164,10 +169,31 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+    src/scripts/theWheel.py
+    src/scripts/myControllerInput.py
+    src/scripts/calcAngle.py
+    src/scripts/transfCamCoord.py
+    #src/scripts/ball_srv.py
+    #src/scripts/basket_srv.py
+    src/scripts/referee.py
+    src/scripts/theBall.py
+    src/scripts/theBasket.py
+    src/scripts/state_machine.py
+    src/scripts/state_machine_alt.py
+    src/scripts/transfCamCoord.py
+    src/scripts/tasks/finds_a_ball.py
+    src/scripts/movement/approachBall.py
+    src/scripts/movement/approachThrow.py
+    src/scripts/movement/findBall.py
+    src/scripts/movement/findBasket.py
+    src/scripts/movement/orientObject.py
+    src/scripts/movement/throwerCalculation.py
+    src/scripts/ref2.html
+    src/scripts/omni.py
+
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -195,8 +221,7 @@ include_directories(
 #   # myfile1
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
+# )`
 #############
 ## Testing ##
 #############

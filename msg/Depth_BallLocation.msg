@@ -1,4 +1,4 @@
 # Both ball location and depth.
-uint8 x
-uint8 y
-uint8 d
+int16 x
+uint16 y
+int32 d

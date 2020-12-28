@@ -23,12 +23,18 @@ def distanceToBall(xBall, yBall):
 # Input ball [xBall, yBall] and basket [xBasket, yBasket] position from camera depth
 # Output motors speed mSer = [M0, M1, M2]
 def approachThrow(xBall, yBall, xBasket, yBasket):
+    """
     if distanceToBall(xBall, yBall) > grabRange:
         m = np.dot(aKI, np.array([[xBall], [yBall], [np.arctan2(yBasket - yBall, xBasket - xBall)]]))
         mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     else:
         mSer = np.array([[0], [0], [0]]) # stop when approach finishes, robot is ready to throw the ball
     return mSer
+    """
+    m = np.dot(aKI, np.array([[xBall], [yBall], [np.arctan2(yBasket - yBall, xBasket - xBall)]]))
+    mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
+    return mSer
+
 
 """
 # Example of throw approach

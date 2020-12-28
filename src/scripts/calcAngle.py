@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
+
 def calc_angle(x_coord):
-    cameraWidth = 1920
-    hfov = 69.4
-    return (x_coord - (cameraWidth / 2) / (cameraWidth / 2)) * (hfov / 2)
+    w = 640
+    HFOV = 69.4
+    angle = x_coord / (w / 2) * (HFOV / 2) * (3.1415/180)
+    return angle
+
+"""
+print(calc_angle(-50))
+"""

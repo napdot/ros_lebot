@@ -6,24 +6,48 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import rospy
 import smach
 from lebot.msg import Wheel
-from lebot.srv import ball
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
-
+from lebot.msg import Depth_BallLocation
+from lebot.msg import Depth_BasketLocation
 
 # ______________________________________________________________________________________________________________________
 
-class FINDBALL(smach.State):
-    def __int__(self):
-        self.msg = Wheel()
-        smach.State.__init__(self, outcomes=['ballFound'])
-        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+class Foo(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['start', 'ballFound', 'atBall'])
 
-    def execute(self):  # execute(self, userdata)
-        x, y, d = self.findball_service()
-        if x != 0 and y != 0:
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
+        self.basket_subscriber = rospy.Publisher('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
+
+        self.msg = Wheel()
+        self.msg.w1, self.msg.w2, self.msg3 = 0, 0, 0
+
+    def execute(self):
+        rospy.loginfo('State')
+
+    def ball_callback(self, data):
+        self.ball_x, self.ball_y, self.ball_d = data.x, data.y, data.d
+
+    def basket_callback(self, data):
+        self.basket_x, self.basket_y, self.basket_d = data.x, data.y, data.d
+
+
+class FINDBALL(Foo):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['start', 'ballFound', 'atBall'])
+        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
+        self.basket_subscriber = rospy.Publisher('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
+
+        self.msg = Wheel()
+        self.msg.w1, self.msg.w2, self.msg3 = 0, 0, 0
+
+    def execute(self):
+        if (self.x == 0 and self.y == 0) or self.d == 0:
             isBallFound = False
             self.msg.w1, self.msg.w2, self.msg.w3 = fball(isBallFound)
             self.move.publish(self.msg)
@@ -33,22 +57,11 @@ class FINDBALL(smach.State):
             self.move.publish(self.msg)
             return 'ballFound'
 
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
-        return x, y, d
 
-
-class GETTOBALL(smach.State):
-    def __int__(self):
-        self.msg = Wheel()
-        smach.State.__init__(self, outcomes=['atBall'])
-        self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
-
+class GETTOBALL(Foo):
     def execute(self):
-        x, y, d = self.findball_service()
-        angle = calc_angle(x)
-        xP, yP = tcc(d, angle)
+        angle = calc_angle(self.x)
+        xP, yP = tcc(self.d, angle)
         if d > minBallRangeThrow:
             self.msg.w1, self.msg.w2, self.msg.w3 = approachBall(xP, yP)
             self.move.publish(self.msg)
@@ -58,41 +71,37 @@ class GETTOBALL(smach.State):
             self.move.publish(self.msg)
             return 'atBall'
 
-    def findball_service(self):
-        ball_service = rospy.ServiceProxy('/ball_service', ball_srv)
-        x, y, d = ball_service
-        return x, y, d
 
-
-class STANDBY(smach.State):
-    def __int__(self):
-        smach.State.__init__(self, outcomes=['start'])
-
-    def execute(self, userdata):
-        print('Standby')
-        print('Going to start...')
+class STANDBY(Foo):
+    def execute(self):
+        rospy.loginfo('Standby - Now starting....')
         return 'start'
+
+
+class OFF(Foo):
+    def execute(self):
+        rospy.loginfo('OFF - finsihing')
+        rospy.signal_shutdown('find_a_ball done')
+        return 'OFF'
 
 
 # ______________________________________________________________________________________________________________________
 
 def main():
     rospy.init_node('state_machine')
-    # Wait for published services to become available.
-    rospy.wait_for_service("/ball_service")
 
     # State machine
     sm = smach.StateMachine(outcomes=['OFF', 'pause'])
     with sm:
         smach.StateMachine.add('STANDBY', STANDBY(),
-                               transition={'start': 'FINDBALL'})
+                               transitions={'start': 'FINDBALL', 'ballFound': 'STANDBY', 'atBall': 'STANDBY'})
 
         # Rotate to find ball, once ball is found then go to GETTOBALL
-        smach.StateMachine.add('FINDBALL', FINDBALL(), transition={'ballFound': 'GETTOBALL'})
-
+        smach.StateMachine.add('FINDBALL', FINDBALL(),
+                               transitions={'start': 'FINDBALL', 'ballFound': 'GETTOBALL', 'atBall': 'FINDBALL'})
         # State for approaching ball
         smach.StateMachine.add('GETTOBALL', GETTOBALL(),
-                               transition={'atBall': 'STANDBY'})
+                               transitions={'atBall': 'STANDBY'})
     outcome = sm.execute()
 
 

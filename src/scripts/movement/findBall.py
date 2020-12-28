@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 import numpy as np
 
@@ -11,7 +12,8 @@ When the camera finds the ball, the robot can start approaching to it.
 maxSpeedEnc = 190 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
-def findBall(found):
+def findBall():
+    """
     if not(found):
         # TODO
         # create logic to choose direction of rotation 1 (counterclockwise) or -1 (clockwise) depending on robot position in the court
@@ -19,6 +21,10 @@ def findBall(found):
         mSer = np.rint(np.multiply(np.multiply(np.multiply(np.array([[1], [1], [1]]), rotation), maxSpeedEnc), speedCut))
     else:
         mSer = np.array([[0], [0], [0]]) # stop when the ball is found
+    return mSer
+    """
+    rotation = 1
+    mSer = np.rint(np.multiply(np.multiply(np.multiply(np.array([[1], [1], [1]]), rotation), maxSpeedEnc), speedCut))
     return mSer
 
 """
