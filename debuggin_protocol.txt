@@ -1,6 +1,0 @@
-Steps for debugging:
-1. Check if aligned_depth_frame
-2. Check that ball service is working
-3. Check that basket service is working
-4. Check that wheel publishing works
-5. Check transitions between states (Asssume that ball in thrower = throw)

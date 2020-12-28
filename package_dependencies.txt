@@ -1,2 +1,0 @@
-Package list:
-rospy roscpp std_msgs ds4drv realsense-ros cv_bridge smach geometry_msgs sensor_msgs
