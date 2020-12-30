@@ -3,7 +3,7 @@
 import numpy as np
 
 maxSpeedEnc = 190
-speedCut = 0.2
+speedCut = 0.05
 
 
 def orient(loc):

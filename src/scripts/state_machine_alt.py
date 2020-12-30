@@ -242,6 +242,8 @@ class Logic:
     def throw_action(self):
         if self.throwing_counter >= self.rate * .8:
             self.throwing_counter = 0
+            self.thrower_msg.t1 = int(0)
+            self.throw.publish(self.thrower_msg)
             return True
 
         else:
