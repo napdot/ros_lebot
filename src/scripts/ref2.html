@@ -62,18 +62,18 @@
     function resumeButtonFunction(e) {
         document.getElementById("action").innerHTML = "Resume button pressed";
         let RefMessage = new ROSLIB.Message({
-            data: "{'signal':'start','targets':['Lebot'],'baskets':['magenta']}"
+            data: '{"signal":"start","targets":["LeBot"],"baskets":["magenta"]}'
          });
         refTopic.publish(RefMessage);
-        document.getElementById("msg").innerHTML = "{'signal':'start','targets':['Lebot'],'baskets':['magenta']}";
+        document.getElementById("msg").innerHTML = '{"signal":"start","targets":["LeBot"],"baskets":["magenta"]}';
     }
     function pauseButtonFunction(e) {
         document.getElementById("action").innerHTML = "Pause button pressed";
         let RefMessage = new ROSLIB.Message({
-            data: "{'signal':'stop','targets':['Lebot']}"
+            data: '{"signal":"stop","targets":["LeBot"]}'
          });
         refTopic.publish(RefMessage);
-        document.getElementById("msg").innerHTML = "{'signal':'stop','targets':['Lebot']}";
+        document.getElementById("msg").innerHTML = '{"signal":"stop","targets":["LeBot"]}';
     }
 </script>
 </head>

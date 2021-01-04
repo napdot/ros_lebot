@@ -54,7 +54,7 @@ class IMATBALL(smach.State):
     def execute(self):  # execute(self, userdata)
         rospy.loginfo('STATEMACHINE: IMATBALL')
         x, y, d = self.findbasket_service()
-        if x == 0 and y == 0 or d = 0:
+        if x == 0 and y == 0 or d == 0:
             return 'noBasket'
         else:
             return 'basketFound'
