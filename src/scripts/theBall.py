@@ -116,7 +116,7 @@ class Ball:
 
     def set_ball_parameters(self):
         try:
-            dir = '../test_lebot/src/lebot/src/scripts/color_parameters.json'
+            dir = '../test_lebot/src/ros_lebot/src/scripts/color_parameters.json'
             with open(dir) as f:
                 d = json.load(f)
                 self.green_parameters = d['green']
