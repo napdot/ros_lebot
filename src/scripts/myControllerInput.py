@@ -2,6 +2,7 @@
 
 import rospy
 from ds4_driver.msg import Report
+from std_msgs.msg import String
 from lebot.msg import Wheel
 from lebot.msg import Thrower
 from scipy.interpolate import interp1d
