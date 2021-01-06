@@ -205,7 +205,7 @@ class Logic:
             return False    # Continue rotating until oriented to ball
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
-            moveValues = fbasket()
+            moveValues = fbasket(1)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Continue until basket is found
@@ -244,6 +244,41 @@ class Logic:
                 self.move.publish(self.msg)
                 return False
 
+
+    def go_action_alt(self):
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
+            self.current_state = 'FindBall'
+            self.counter = 0
+            return False
+
+        if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:    # Basket lost
+            self.current_state = 'ImAtBall'
+            self.counter = 0
+            return False
+
+        else:
+            basket_angle = calc_angle(self.basket_x)
+            ball_angle = calc_angle(self.ball_x)
+
+            ball_xP, ball_yP = tcc(self.ball_d, ball_angle)
+            basket_xP, basket_yP = tcc(self.basket_d, basket_angle)
+
+            coord = align_throw(ball_xP, ball_yP, basket_xP, basket_yP, self.min_ball_dist)
+
+            if coord[0] < 60 and coord[1] < 60:    # Ugh, dont' know what values .-.
+                if abs(ball_angle) > self.orientation_offset:
+                    moveValues = orient(self.ball_x)
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False  # Continue rotating until oriented to ball
+                else:
+                    return True
+
+            moveValues = approachBall(cood[0], coord[1])    # ApproachBall used as approach coordinate
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False  # Continue until near
+
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
             self.current_state = 'FindBall'
@@ -265,32 +300,6 @@ class Logic:
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
-
-    def align_action(self):
-        bl_x, bl_y, bl_d = self.ball_x, self.ball_y, self.ball_d
-        bk_x, bk_y, bk_d = self.basket_x, self.basket_y, self.basket_d
-
-        if (bl_x == -320 and bl_y == 480) or bl_d == 0:     # Ball lost
-            self.counter = 0
-            self.current_state = 'FindBall'
-            return False
-
-        if (bk_x == -320 and bk_y == 480) or bk_d == 0:  # No basket in sight
-            self.counter = 0
-            self.current_state = 'GetToBall'
-            return False
-
-        ball_angle = calc_angle(bl_x)
-        ball_xP, ball_yP = tcc(self.ball_d, ball_angle)
-        basket_angle = calc_angle(bk_x)
-        basket_xP, basket_yP = tcc(self.basket_d, basket_angle)
-        coord = align_throw(ball_xP, ball_yP, basket_xP, basket_yP, self.min_ball_dist)
-        if abs(coord[0]) < self.distance_offset and abs(coord[1]) < self.distance_offset:
-            return True     # Aligned to ball and basket. Proceed to go
-        moveValues = ots(coord[0], coord[1])
-        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-        self.move.publish(self.msg)
-        return False    # Continue aligning to basket and ball
 
     def pause_action(self):
         pass

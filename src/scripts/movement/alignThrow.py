@@ -13,7 +13,8 @@ def align_throw(x0, y0, x1, y1, d):
 
 """
 v0 = [15, 15]
-v1 = [3, 0]
+v1 = [30, 36]
 dist = 20
 print(align_throw(v0[0], v0[1], v1[0], v1[1], dist))
 """
+
