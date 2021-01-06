@@ -159,17 +159,23 @@ class Logic:
     def standby_action(self):
         return True
 
-    def find_ball_action(self):
+    def find_ball_action(self): # Finds ball and orients to ball.
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
             moveValues = fball()
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Continue rotation
         else:  # Ball in sight.
+            angle = calc_angle(self.ball_x)
+            if abs(angle) > self.orientation_offset:
+                moveValues = orient(self.ball_x)
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False  # Continue rotating until oriented to ball
             return True     # Proceed to get_to_ball
 
-    def get_to_ball_action(self):
-        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:    # No ball in singt
+    def get_to_ball_action(self):   # Moves towards ball until at a certain distance
+        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:    # No ball in sight
             self.current_state = 'FindBall'
             self.counter = 0
             return False
@@ -185,8 +191,11 @@ class Logic:
 
             elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
                 return True # Proceed to im_at_ball
+            return False
 
-    def im_at_ball_action(self):
+        return False
+
+    def im_at_ball_action(self):    # Rotate around ball
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
