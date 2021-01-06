@@ -188,12 +188,8 @@ class Logic:
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue until near
-
-            elif 1 < self.ball_d < self.min_ball_dist:  # Ball located and near
+            else:   # Oriented and near
                 return True # Proceed to im_at_ball
-            return False
-
-        return False
 
     def im_at_ball_action(self):    # Rotate around ball
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
@@ -222,7 +218,7 @@ class Logic:
             self.counter = 0
             return False
 
-        elif (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:    # Basket lost
+        if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:    # Basket lost
             self.current_state = 'ImAtBall'
             self.counter = 0
             return False
@@ -249,13 +245,18 @@ class Logic:
                 return False
 
     def throw_action(self):
-        if self.throwing_counter >= self.rate * .8:
-            self.throwing_counter = 0
-            self.thrower_msg.t1 = int(0)
-            self.throw.publish(self.thrower_msg)
-            return True
+        if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
+            self.current_state = 'FindBall'
+            self.counter = 0
+            return False
 
-        else:
+        elif self.throwing_counter >= self.rate * .8:   # Termination of throwing
+            self.throwing_counter = 0
+            self.thrower_msg.t1 = int(1000)
+            self.throw.publish(self.thrower_msg)
+            return True # Go find a new ball
+
+        else:   # Turn on thrower and move forward
             throwerValue = thrower_calculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
@@ -263,7 +264,7 @@ class Logic:
             moveValues = 28, 28, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            return False
+            return False    # Throwing
 
     def align_action(self):
         bl_x, bl_y, bl_d = self.ball_x, self.ball_y, self.ball_d
