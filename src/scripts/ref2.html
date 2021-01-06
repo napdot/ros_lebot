@@ -23,6 +23,8 @@
     ros.on('close', function() {
         document.getElementById("action").innerHTML = "Closed connection to ROS."
         document.getElementById("status").innerHTML = "Closed";
+        setTimeout(() => {  console.log("Retrying connection"); }, 1000);
+        window.location.reload(false);
      });
 
     var refTopic = new ROSLIB.Topic({
@@ -40,7 +42,7 @@
     };
     websocket.onclose = function(e) {
         document.getElementById("action").innerHTML = 'Websocket closed'
-    }
+    };
     websocket.onmessage = function(e) {
         document.getElementById("action").innerHTML = 'New websocket message'
         onMessage(e.data)
