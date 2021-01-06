@@ -13,6 +13,7 @@ class Signal:
     def __init__(self):
         self.ws_client = rospy.Subscriber('/js_ref', String, self.signal_callback, queue_size=10)
         self.ref_signals = rospy.Publisher('/referee', Ref_Command, queue_size=10)
+        self.color_pub = rospy.Publisher('/color_ref', String, queue_size=1)
 
         # !!! This path is so ugly.
         webbrowser.open_new('../test_lebot/src/ros_lebot/src/scripts/ref2.html')
@@ -28,6 +29,7 @@ class Signal:
                 cm.command = 'resume'
                 self.ref_signals.publish(cm)
                 color = ref_obj['targets'][index]
+                self.color_pub.publish(color)
                 rospy.set_param("basket_color", color)
             elif ref_obj['signal'] == 'stop':
                 cm.command = 'pause'

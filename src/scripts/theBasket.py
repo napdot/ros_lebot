@@ -2,6 +2,7 @@
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 import numpy as np
 from lebot.msg import Depth_BasketLocation
 import cv2
@@ -22,6 +23,8 @@ class Basket:
         self.set_basket_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback, queue_size=1)
+        self.image_sub = rospy.Subscriber("/color_ref", String, self.color_callback, queue_size=1)
+
         self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
         self.hsv = np.zeros((480, 650, 3), np.uint16)
         self.thresh = np.zeros((480, 650, 3), np.uint16)
@@ -30,6 +33,10 @@ class Basket:
         self.kernel = np.ones((3, 3), np.uint8)
         self.depth_bridge = CvBridge()
         self.color_bridge = CvBridge()
+
+    def color_callback(self, data):
+        self.color = data.data
+        rospy.logwarn(str(self.color))
 
     def get_my_image_callback(self, data):
         try:
@@ -139,10 +146,8 @@ if __name__ == '__main__':  # Need to have color get_param in loop for updating 
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
     color = rospy.get_param("basket_color")
-    while not rospy.is_shutdown():
-        color = rospy.get_param("basket_color")
-        Basket(color, alt_dist=True)
-        rospy.logwarn(color)
+    Basket(color, alt_dist=True)
+    rospy.logwarn(color)
     rate.sleep()
     rospy.spin()
 
