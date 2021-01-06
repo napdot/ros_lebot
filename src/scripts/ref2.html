@@ -23,6 +23,7 @@
     ros.on('close', function() {
         document.getElementById("action").innerHTML = "Closed connection to ROS."
         document.getElementById("status").innerHTML = "Closed";
+        window.close()
      });
 
     var refTopic = new ROSLIB.Topic({
