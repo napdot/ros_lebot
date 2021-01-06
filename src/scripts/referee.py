@@ -28,7 +28,7 @@ class Signal:
             if ref_obj['signal'] == 'start':
                 cm.command = 'resume'
                 self.ref_signals.publish(cm)
-                color = ref_obj['targets'][index]
+                color = ref_obj['baskets'][index]
                 if color == 'magenta':
                     color = 'red'
                 self.color_pub.publish(color)
