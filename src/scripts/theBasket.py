@@ -35,6 +35,7 @@ class Basket:
         self.color_bridge = CvBridge()
 
     def color_callback(self, data):
+        rospy.logwarn(data.data)
         self.color = data.data
         rospy.logwarn(str(self.color))
 
