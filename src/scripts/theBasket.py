@@ -139,8 +139,10 @@ if __name__ == '__main__':  # Need to have color get_param in loop for updating 
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
     color = rospy.get_param("basket_color")
-    Basket(color, alt_dist=True)
-    rospy.logwarn(color)
+    while not rospy.is_shutdown():
+        color = rospy.get_param("basket_color")
+        Basket(color, alt_dist=True)
+        rospy.logwarn(color)
     rate.sleep()
     rospy.spin()
 
