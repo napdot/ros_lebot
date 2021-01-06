@@ -29,6 +29,8 @@ class Signal:
                 cm.command = 'resume'
                 self.ref_signals.publish(cm)
                 color = ref_obj['targets'][index]
+                if color == 'magenta':
+                    color = 'red'
                 self.color_pub.publish(color)
                 rospy.set_param("basket_color", color)
             elif ref_obj['signal'] == 'stop':
