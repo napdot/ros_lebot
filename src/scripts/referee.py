@@ -15,14 +15,14 @@ class Signal:
         self.ref_signals = rospy.Publisher('/referee', Ref_Command, queue_size=10)
 
         # !!! This path is so ugly.
-        # webbrowser.open_new('../test_lebot/src/lebot/src/scripts/ref2.html')
+        webbrowser.open_new('../test_lebot/src/ros_lebot/src/scripts/ref2.html')
 
     def signal_callback(self, string):
         ref_string = string.data
         ref_obj = json.loads(ref_string)
         targets = ref_obj['targets']
         try:    # if target.index returns error, means that we are not on target list and don't need to change anything.
-            index = targets.index('LeBot')
+            index = targets.index("LeBot")
             cm = Ref_Command()
             if ref_obj['signal'] == 'start':
                 cm.command = 'resume'
@@ -33,6 +33,7 @@ class Signal:
                 cm.command = 'pause'
                 self.ref_signals.publish(cm)
         except:
+            rospy.logwarn("Referee signal callback not targeting LeBot (Check capitalization)")
             pass
 
 if __name__ == '__main__':
