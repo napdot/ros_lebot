@@ -266,13 +266,10 @@ class Logic:
             coord = align_throw(ball_xP, ball_yP, basket_xP, basket_yP, self.min_ball_dist)
 
             if coord[0] < 60 and coord[1] < 60:    # Ugh, dont' know what values .-.
-                if abs(ball_angle) > self.orientation_offset:
-                    moveValues = orient(self.ball_x)
-                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-                    self.move.publish(self.msg)
-                    return False  # Continue rotating until oriented to ball
-                else:
-                    return True
+                if not (ball_angle - self.orientation_offset < basket_angle < ball_angle + self.orientation_offset):
+
+                    return Fasle
+                return True
 
             moveValues = approachBall(cood[0], coord[1])    # ApproachBall used as approach coordinate
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
