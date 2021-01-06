@@ -2,42 +2,91 @@
 
 ## Structure 1.0
 
-#### Packages
+#### Packages used
 
-​	1) realsense-ros
-​	2) ros_lebot
-​	3) cv_bridge
-​    	4) ds4_driver
-	5) rosbridge_suite
+- realsense-ros
+- ds4_driver
+- rosbridge_suite
+- vision_opencv
 
-#### Topics
+#### Launch files
 
-From realsense-ros:
+For alpha demo:
 
-- [x] /camera/aligned_depth_to_color/image_raw
-- [x] /camera/color/image_raw
+```bash
+cd test_lebot
+source devel/setup.bash
+roslaunch lebot pre.launch
+```
 
-From ros_lebot:
+For debugging logic:
 
-- [x]  /move_somewhere
-- [x] /ball
-- [x]  /basket
+```bash
+cd test_lebot
+source devel/setup.bash
+roslaunch lebot debug_logic.launch
+```
+
+For debugging masks:
+
+```bash
+cd test_lebot
+source devel/setup.bash
+roslaunch lebot debug_mask.launch
+```
+
+For manual control:
+
+```bash
+cd test_lebot
+source devel/setup.bash
+roslaunch lebot manual_control.launch
+```
+
+where test_lebot is your ros environment.
 
 #### Nodes
 
-From ros_lebot:
+- /ControllerToRos
 
-- [x]  /vruum
-- [x]  /basket_calc
-- [x]  /ball_calc
+  Mapping of inputs. Publishes each input to the corresponding topic.
 
-#### Additional scripts
+- /GameLogic
 
-- [ ] wheel_calc_ball_basket_orient.py ---> Publish to move_somewhere.
+  Logic node. Susbcribes to ball, basket, and referee and does actions according to each state it is at.
 
-#### Missing.
+- /iFindBalls
 
-* Game logic
-* Camera parameter script
-* CMAKE file.
-* DS4_driver.
+  Finds balls :p
+
+- /iFIndBaskets
+
+  Finds the basket and gets updated from referee changes to basket color.
+
+- /iAndRef
+
+  Subscribes to messages from the bridge of html and ROS and makes the corresponding changes.
+
+#### Useful command when debugging. 
+
+rostopic pub /referee lebot/Ref_Command "{'command':'resume'}"
+
+rostopic pub /referee lebot/Ref_Command "{'command':'pause'}"
+
+rostopic pub /color_ref std_msgs/String "{'data':'blue'}"
+
+rostopic pub /color_ref std_msgs/String "{'data':'red'}"
+
+#### Needs rework
+
+- In logic node, go_action.
+
+#### Missing
+
+- Check if websocket from referee is working properly.
+  - Change ref2.html websocket address to correct one.
+- Localization or court limits.
+  - A bit too advance :(
+
+
+
