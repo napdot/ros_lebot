@@ -19,11 +19,13 @@ class Cont:
         self.controller_max_speed = 50
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=1)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
+        self.game_logic_pub = rospy.Publisher('/js_ref', String, queue_size=1)
         self.message = Wheel()
         self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.thrower_message = Thrower()
         self.thrower_speed = 1000
         self.maxSpeedEnc = 190
+
 
     def controller_callback(self, data):
         report = Report()
@@ -67,6 +69,16 @@ class Cont:
             self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
 
         self.controller_pub.publish(self.message)
+
+        if report.button_options:
+            start_msg = String()
+            start_msg.data = '{"signal":"start","targets":["LeBot"],"baskets":["blue"]}'
+            self.game_logic_pub.publish(start_msg)
+
+        if report.button_share:
+            stop_msg = String()
+            stop_msg.data = '{"signal":"stop","targets":["LeBot"]}'
+            self.game_logic_pub.publish(stop_msg)
 
         if report.button_cross:
             self.thrower_message.t1 = self.thrower_speed
