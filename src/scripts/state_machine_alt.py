@@ -228,22 +228,17 @@ class Logic:
             ball_angle = calc_angle(self.ball_x)
 
             if abs(basket_angle) > self.orientation_offset:   # Orientation to basket is off
-                moveValues = orient(self.basket_x)
+                if self.basket_x > 0:
+                    rot = -1
+                else:
+                    rot = 1
+                moveValues = fbasket(rot)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
 
-            if ball_angle - self.orientation_offset < basket_angle < ball_angle + self.orientation_offset:
-                return True
-
             else:
-                ball_xP, ball_yP = tcc(self.ball_d, ball_angle)
-                basket_xP, basket_yP = tcc(self.basket_d, basket_angle)
-                moveValues = approachThrow(ball_xP, ball_yP, basket_xP, basket_yP)
-                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-                self.move.publish(self.msg)
-                return False
-
+                return True
 
     def go_action_alt(self):
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost

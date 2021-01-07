@@ -1,13 +1,1 @@
-<<<<<<< HEAD
-calcAngle.py
-=======
-<<<<<<< HEAD
-theBall.py
-=======
-<<<<<<< HEAD
-approachBall.py
-=======
-myControllerInput.py
->>>>>>> d6347475041f930d165e5bdb8f19d4bd7a04e0a6
->>>>>>> 9d5626fcd61f70f4db7a04e3734753a8981f87d2
->>>>>>> e0a2690783aede706b8a8ba5cfea76b404c9b596
+state_machine_alt.py
