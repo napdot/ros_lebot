@@ -18,6 +18,7 @@ from movement.alignThrow import align_throw
 from omni import omni_to_serial as ots
 from transfCamCoord import transfCamCoord as tcc
 from calcAngle import calc_angle
+from calcAngleCameraOrientation import calc_angle_cam
 from lebot.msg import Depth_BallLocation
 from lebot.msg import Depth_BasketLocation
 from lebot.msg import Ref_Command
@@ -166,7 +167,7 @@ class Logic:
             self.move.publish(self.msg)
             return False    # Continue rotation
         else:  # Ball in sight.
-            angle = calc_angle(self.ball_x)
+            angle = calc_angle_cam(self.ball_x)
             if abs(angle) > self.orientation_offset:
                 moveValues = orient(self.ball_x)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -182,7 +183,9 @@ class Logic:
 
         else:   # Ball in sight
             angle = calc_angle(self.ball_x)
-            xP, yP = tcc(self.ball_d, angle)
+            # logangle = angle * 180 / np.pi
+            # rospy.logwarn(logangle)
+            yP, xP = tcc(self.ball_d, angle)
             if self.ball_d > self.min_ball_dist:  # Not yet near ball
                 moveValues = approachBall(xP, yP)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -197,7 +200,7 @@ class Logic:
             self.counter = 0
             return False
 
-        ball_angle = calc_angle(self.ball_x)
+        ball_angle = calc_angle_cam(self.ball_x)
         if abs(ball_angle) > self.orientation_offset:   # Orientation to ball is off
             moveValues = orient(self.ball_x)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -224,8 +227,7 @@ class Logic:
             return False
 
         else:
-            basket_angle = calc_angle(self.basket_x)
-            ball_angle = calc_angle(self.ball_x)
+            basket_angle = calc_angle_cam(self.basket_x)
 
             if abs(basket_angle) > self.orientation_offset:   # Orientation to basket is off
                 if self.basket_x > 0:
@@ -291,7 +293,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = 28, 28, 0     # Constant approach should result in constant throwing results.
+            moveValues = 28, -28, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
