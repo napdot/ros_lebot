@@ -139,7 +139,7 @@ class Logic:
             self.current_state = 'Pause'
 
         elif command_string == 'resume':
-            self.current_state = 'Standby'
+            self.current_state = 'FindBall'
             self.execute_state(self.current_state)
 
     def pub_state_string(self):
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
     fb = Logic(min_dist=450, node_rate=myRate)
-    fb.current_state = 'FindBall'
+    fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
         rate.sleep()
