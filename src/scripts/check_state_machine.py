@@ -55,6 +55,12 @@ class Logic:
         self.orientation_offset = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
+   
+    def stop_wheel(self):
+        moveValues = [0, 0, 0]
+        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+        self.move.publish(self.msg)
+
 
     def execute_state(self, state):
         self.pub_state_string()
@@ -77,6 +83,7 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -86,7 +93,8 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
-                return
+                self.stop_wheel()
+            return
             self.counter = self.counter + 1
             return
 
@@ -95,6 +103,7 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -139,7 +148,7 @@ class Logic:
             self.current_state = 'Pause'
 
         elif command_string == 'resume':
-            self.current_state = 'FindBall'
+            self.current_state = 'ImAtBall'
             self.execute_state(self.current_state)
 
     def pub_state_string(self):
@@ -199,11 +208,6 @@ class Logic:
             return False
 
         ball_angle = calc_angle_cam(self.ball_x)
-        if abs(ball_angle) > self.orientation_offset:   # Orientation to ball is off
-            moveValues = orient(self.ball_x)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
-            return False    # Continue rotating until oriented to ball
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
             moveValues = fbasket(1)
