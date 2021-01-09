@@ -280,6 +280,10 @@ class Logic:
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
             self.current_state = 'FindBall'
             self.counter = 0
+            self.throwing_counter = 0
+            self.thrower_msg.t1 = int(1000)
+            self.throw.publish(self.thrower_msg)
+
             return False
 
         elif self.throwing_counter >= self.rate * .8:   # Termination of throwing

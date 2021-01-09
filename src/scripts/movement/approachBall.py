@@ -11,7 +11,8 @@ When the approach finishes, the robot is facing the ball at ballMinRange distanc
 robotRadius = 132.5 # [mm] Radius of Robot structure (from center to omniwheels)
 rangeOffset = 50 # [mm] Distance from Robot circumference where approach to ball stops
 ballMinRange = robotRadius + rangeOffset # [mm] Distance to approach the ball before positioning for the throw
-aKI = np.array([[np.sqrt(3)/3, 1/3, 1/3], [-np.sqrt(3)/3, 1/3, 1/3], [0, -2/3, 1/3]]) # Inverse Matrix of Kinetic model
+#aKI = np.array([[np.sqrt(3)/3, 1/3, 1/3], [-np.sqrt(3)/3, 1/3, 1/3], [0, -2/3, 1/3]]) # Inverse Matrix of Kinetic model
+aKI = np.array([[-1/np.sqrt(3), -1/3, 1/3], [1/np.sqrt(3), -1/3, 1/3], [0, 2/3, 1/3]]) # Inverse Matrix of Kinetic model
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
