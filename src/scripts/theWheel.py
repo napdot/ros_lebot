@@ -6,14 +6,14 @@ from lebot.msg import Thrower
 
 
 class Move:
-    def __init__(self, serial_type):
+    def __init__(self, nelli):
         self.ser = serial.Serial("/dev/ttyACM0", timeout=0.03, baudrate=115200,
                                  bytesize=serial.EIGHTBITS,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
 
         self.wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback, queue_size=1)
         self.thrower_sub = rospy.Subscriber("/thrower_values", Thrower, self.thrower_callback, queue_size=1)
-        self.ser_type = serial_type
+        self.ser_type = nelli
 
     def move_to(self, w1, w2, w3):
         if self.ser_type:
@@ -40,5 +40,6 @@ class Move:
 
 if __name__ == '__main__':
     rospy.init_node('vruum', anonymous=False)
-    IWhoMoves = Move(type=True)
+    # True is test robot. False for LeBot.
+    IWhoMoves = Move(nelli=True)
     rospy.spin()
