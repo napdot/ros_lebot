@@ -2,7 +2,7 @@
 
 import numpy as np
 
-maxSpeedEnc = 190
+maxSpeedEnc = 100
 speedCut = 0.05
 
 

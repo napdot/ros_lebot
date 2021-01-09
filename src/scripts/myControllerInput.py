@@ -16,8 +16,8 @@ class Cont:
         self.wheelDistanceFromCenter = 10
         self.wheelAngle = [0, 120, 240]
         self.robotAngularVelocity = 10
-        self.default_speed = 70
-        self.controller_max_speed = 50
+        self.default_speed = 20
+        self.controller_max_speed = 20
         self.controller_sub = rospy.Subscriber("/raw_report", Report, self.controller_callback, queue_size=1)
         self.controller_pub = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.game_logic_pub = rospy.Publisher('/js_ref', String, queue_size=1)
@@ -25,7 +25,7 @@ class Cont:
         self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.thrower_message = Thrower()
         self.thrower_speed = 1000
-        self.maxSpeedEnc = 190
+        self.maxSpeedEnc = 100
 
 
     def controller_callback(self, data):
