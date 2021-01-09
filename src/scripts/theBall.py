@@ -110,6 +110,11 @@ class Ball:
             cY = 0
             cR = 0
 
+        if cY > 430:    # Small strip for upper part.
+            cX = 0
+            cY = 0
+            cR = 0
+
         self.ball_location = [cX, cY]
         self.ball_radius = cR
         return
