@@ -112,7 +112,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lebot
-  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy smach std_msgs message_runtime rqt_image_view rosbridge_server
+  CATKIN_DEPENDS cv_bridge ds4_driver roscpp rospy std_msgs message_runtime rosbridge_server
 #  DEPENDS system_lib
 )
 
