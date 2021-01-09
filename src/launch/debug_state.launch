@@ -1,0 +1,18 @@
+<launch>
+    <node pkg="lebot" type="check_state_machine_alt.py" name="GameLogic"/>
+    <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
+    <node pkg="lebot" type="theBasket.py" name="iFindBasket"/>
+    <node pkg="lebot" type="referee.py" name="iAndRef"/>
+    <node pkg="lebot" type="theWheel.py" name="RosToWheel"/>
+    <node pkg="lebot" type="myControllerInput.py" name="ControllerToRos"/>
+    <param name="basket_color" type="string" value="blue"/>
+    <param name="lebot_rate" type="int" value="27"/>
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="align_depth" value="true"/>
+    </include>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+    </include>
+    <include file="$(find ds4_driver)/launch/ds4_driver.launch">
+    <arg name="use_standard_msgs" value="true" />
+    </include>
+</launch>
