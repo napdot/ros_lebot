@@ -12,11 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   ds4_driver
   roscpp
   rospy
-  smach
-  smach_ros
   std_msgs
   message_generation
-  rqt_image_view
   rosbridge_server
 )
 
@@ -66,8 +63,8 @@ add_message_files(
 ## Generate services in the 'srv' folder
 #add_service_files(
 # FILES
-# ball.srv
-# basket.srv
+#
+#
 #)
 
 ## Generate actions in the 'action' folder
@@ -173,16 +170,14 @@ catkin_install_python(PROGRAMS
     src/scripts/theWheel.py
     src/scripts/myControllerInput.py
     src/scripts/calcAngle.py
+    src/scripts/calcAngleCameraOrientation.py
     src/scripts/transfCamCoord.py
-    #src/scripts/ball_srv.py
-    #src/scripts/basket_srv.py
     src/scripts/referee.py
     src/scripts/theBall.py
     src/scripts/theBasket.py
-    src/scripts/state_machine.py
     src/scripts/state_machine_alt.py
     src/scripts/transfCamCoord.py
-    src/scripts/tasks/finds_a_ball.py
+    src/scripts/movement/alignThrow.py
     src/scripts/movement/approachBall.py
     src/scripts/movement/approachThrow.py
     src/scripts/movement/findBall.py
