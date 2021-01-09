@@ -25,6 +25,8 @@ class Cont:
         self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.thrower_message = Thrower()
         self.thrower_speed = 1000
+        self.thrower_min = 1000
+        self.thrower_max = 2000
         self.maxSpeedEnc = 100
 
 
@@ -39,9 +41,13 @@ class Cont:
 	
         if report.button_square:
             self.thrower_speed = self.thrower_speed + 1
+            if self.thrower_speed >= self.thrower_max:
+                self.thrower_speed = self.thrower_max
 
         elif report.button_circle:
             self.thrower_speed = self.thrower_speed - 1
+            if self.thrower_speed <= self.thrower_min:
+                self.thrower_speed = self.thrower_min
 
         if report.dpad_up:
             self.message.w1 = self.default_speed
