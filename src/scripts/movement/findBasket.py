@@ -9,7 +9,7 @@ When the camera finds the basket, the robot can start approaching the ball to th
 < Try to finish this stage with y = 0, x = ballMinRange and alligned Robot-Ball-Basket >
 """
 
-aKI = np.array([[np.sqrt(3)/3, 1/3, 1/3], [-np.sqrt(3)/3, 1/3, 1/3], [0, -2/3, 1/3]]) # Inverse Matrix of Kinetic model
+aKI = np.array([[-1/np.sqrt(3), -1/3, 1/3], [1/np.sqrt(3), -1/3, 1/3], [0, 2/3, 1/3]]) # Inverse Matrix of Kinetic model
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 

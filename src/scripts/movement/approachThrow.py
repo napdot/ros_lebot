@@ -13,7 +13,7 @@ rangeOffset = 50 # [mm] Distance from Robot circumference where approach to ball
 ballMinRange = robotRadius + rangeOffset # [mm] Distance to approach the ball before positioning for the throw
 throwerContactDepth = 20 # [mm] Distance  within the robot from its circumference until the contact point ball-throwerMotor
 grabRange = robotRadius - throwerContactDepth # [mm] Dinstance from the thrower motor to the ball
-aKI = np.array([[np.sqrt(3)/3, 1/3, 1/3], [-np.sqrt(3)/3, 1/3, 1/3], [0, -2/3, 1/3]]) # Inverse Matrix of Kinetic model
+aKI = np.array([[-1/np.sqrt(3), -1/3, 1/3], [1/np.sqrt(3), -1/3, 1/3], [0, 2/3, 1/3]]) # Inverse Matrix of Kinetic model
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.2 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
