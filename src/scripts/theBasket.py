@@ -96,7 +96,7 @@ class Basket:
         return
 
     def get_basket_location(self):
-        min_basket_area = 30
+        min_basket_area = 150
         try:
             cnt = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             areas = []
