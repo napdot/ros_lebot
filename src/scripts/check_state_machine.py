@@ -173,8 +173,9 @@ class Logic:
 
     def get_to_ball_action(self):   # Moves towards ball until at a certain distance
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:    # No ball in sight
-            self.current_state = 'FindBall'
+            self.current_state = 'GetToBall'
             self.counter = 0
+            rospy.logwarn('DEBUG: Ball lost')
             return False
 
         else:   # Ball in sight
@@ -192,8 +193,9 @@ class Logic:
 
     def im_at_ball_action(self):    # Rotate around ball
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
-            self.current_state = 'FindBall'
+            self.current_state = 'ImAtBall'
             self.counter = 0
+            rospy.logwarn('DEBUG: Ball lost')
             return False
 
         ball_angle = calc_angle_cam(self.ball_x)
@@ -213,13 +215,15 @@ class Logic:
 
     def go_action(self):
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
-            self.current_state = 'FindBall'
+            self.current_state = 'Go'
             self.counter = 0
+            rospy.logwarn('DEBUG: Ball lost')
             return False
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:    # Basket lost
-            self.current_state = 'ImAtBall'
+            self.current_state = 'Go'
             self.counter = 0
+            rospy.logwarn('DEBUG: Basket lost')
             return False
 
         else:
@@ -274,8 +278,9 @@ class Logic:
 
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
-            self.current_state = 'FindBall'
+            self.current_state = 'Throw'
             self.counter = 0
+            rospy.logwarn('DEBUG: Basket lost')
             return False
 
         elif self.throwing_counter >= self.rate * .8:   # Termination of throwing
@@ -311,7 +316,7 @@ if __name__ == '__main__':
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
     fb = Logic(min_dist=450, node_rate=myRate)
-    fb.current_state = 'findball'
+    fb.current_state = 'FindBall'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
         rate.sleep()
