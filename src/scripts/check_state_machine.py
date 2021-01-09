@@ -81,7 +81,7 @@ class Logic:
         elif state == 'FindBall':  # Rotation until a ball is detected.
             next = self.find_ball_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'GetToBall'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -91,7 +91,7 @@ class Logic:
         elif state == 'GetToBall':  # Move towards ball until a certain distance
             next = self.get_to_ball_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'ImAtBall'
                 self.counter = 0
                 self.stop_wheel()
             return
@@ -101,7 +101,7 @@ class Logic:
         elif state == 'ImAtBall':  # Rotate around ball until basket is found
             next = self.im_at_ball_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'Go'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -122,6 +122,7 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -148,7 +149,7 @@ class Logic:
             self.current_state = 'Pause'
 
         elif command_string == 'resume':
-            self.current_state = 'ImAtBall'
+            self.current_state = 'FindBall'
             self.execute_state(self.current_state)
 
     def pub_state_string(self):
@@ -235,9 +236,9 @@ class Logic:
 
             if abs(basket_angle) > self.orientation_offset:   # Orientation to basket is off
                 if self.basket_x > 0:
-                    rot = -1
-                else:
                     rot = 1
+                else:
+                    rot = -1
                 moveValues = fbasket(rot)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
