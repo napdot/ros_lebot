@@ -52,6 +52,7 @@ class Logic:
         self.current_state = None
 
         self.min_ball_dist = min_dist
+        self.orientation_offset_mov = 10 * np.pi / 180
         self.orientation_offset = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
@@ -175,7 +176,7 @@ class Logic:
             return False    # Continue rotation
         else:  # Ball in sight.
             angle = calc_angle_cam(self.ball_x)
-            if abs(angle) > self.orientation_offset:
+            if abs(angle) > self.orientation_offset_mov:
                 moveValues = orient(self.ball_x)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
@@ -188,6 +189,12 @@ class Logic:
             self.counter = 0
             rospy.logwarn('DEBUG: Ball lost')
             return False
+        
+        angle = calc_angle_cam(self.ball_x)
+        if abs(angle) > self.orientation_offset_mov:
+            self.current_state = 'FindBall'
+            self.counter = 0
+            rospy.logwarn('DEBUG: Ball Unoriented')
 
         else:   # Ball in sight
             angle = calc_angle(self.ball_x)
