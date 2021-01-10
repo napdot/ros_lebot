@@ -91,7 +91,7 @@ class Logic:
         elif state == 'GetToBall':  # Move towards ball until a certain distance
             next = self.get_to_ball_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'ImAtBall'
                 self.counter = 0
                 self.stop_wheel()
             return
@@ -132,7 +132,6 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return

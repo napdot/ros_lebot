@@ -88,7 +88,7 @@ class Ball:
         return
 
     def get_ball_location(self):
-        area_min = 20
+        area_min = 17
         self.ball_location = [0, 0]
         try:
             cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -106,11 +106,6 @@ class Ball:
                 cY = 0
                 cR = 0
         except:
-            cX = 0
-            cY = 0
-            cR = 0
-
-        if cY > 430:    # Small strip for upper part.
             cX = 0
             cY = 0
             cR = 0
