@@ -54,7 +54,7 @@ class Logic:
         self.min_ball_dist = min_dist
         self.orientation_offset_mov = 10 * np.pi / 180
         self.orientation_offset = 6 * np.pi / 180
-        self.orientation_offset_rot = 25 * np.pi / 180
+        self.orientation_offset_rot = 6 * np.pi / 180
         self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
@@ -123,7 +123,7 @@ class Logic:
         elif state == 'Go':  # Move and set thrower speed until ball out of range.
             next = self.go_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'Throw'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -298,12 +298,15 @@ class Logic:
 
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
-            self.current_state = 'Throw'
+            self.current_state = 'Go'
             self.counter = 0
+            self.throwing_counter = 0
+            self.thrower_msg.t1 = int(1000)
+            self.throw.publish(self.thrower_msg)
             rospy.logwarn('DEBUG: Basket lost')
             return False
 
-        elif self.throwing_counter >= self.rate * .8:   # Termination of throwing
+        elif self.throwing_counter >= self.rate * 2:   # Termination of throwing
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(1000)
             self.throw.publish(self.thrower_msg)
@@ -314,7 +317,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = 28, -28, 0     # Constant approach should result in constant throwing results.
+            moveValues = -45, 45, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
