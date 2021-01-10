@@ -254,7 +254,7 @@ class Logic:
                     rot = 1
                 else:
                     rot = -1
-                moveValues = fbasket(1) # 1 or -1 according to rotation directions
+                moveValues = fbasket(rot) # 1 or -1 according to rotation directions
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
