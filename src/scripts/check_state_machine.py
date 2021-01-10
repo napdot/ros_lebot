@@ -55,6 +55,7 @@ class Logic:
         self.orientation_offset_mov = 10 * np.pi / 180
         self.orientation_offset = 6 * np.pi / 180
         self.orientation_offset_rot = 25 * np.pi / 180
+        self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
    
@@ -103,7 +104,7 @@ class Logic:
         elif state == 'ImAtBall':  # Rotate around ball until basket is found
             next = self.im_at_ball_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'Go'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -248,12 +249,12 @@ class Logic:
         else:
             basket_angle = calc_angle_cam(self.basket_x)
 
-            if abs(basket_angle) > self.orientation_offset:   # Orientation to basket is off
+            if abs(basket_angle) > self.orientation_offset_throw:   # Orientation to basket is off
                 if self.basket_x > 0:
                     rot = 1
                 else:
                     rot = -1
-                moveValues = fbasket(rot)
+                moveValues = fbasket(1) # 1 or -1 according to rotation directions
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
