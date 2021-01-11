@@ -10,8 +10,8 @@ import json
 import os
 
 
-class Basket:
-    def __init__(self, color, alt_dist):
+class Line:
+    def __init__(self):
         self.color = color
         self.red_parameters = []
         self.blue_parameters = []
@@ -22,8 +22,7 @@ class Basket:
 
         self.set_basket_parameters()
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
-        self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback, queue_size=1)
-        self.color_sub = rospy.Subscriber("/color_ref", String, self.color_callback, queue_size=1)
+        self.image_sub = rospy.Subscriber("/color_ref", String, self.color_callback, queue_size=1)
 
         self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
         self.hsv = np.zeros((480, 650, 3), np.uint16)
@@ -121,7 +120,7 @@ class Basket:
             self.basket_location = [0, 0]
 
 
-    def set_basket_parameters(self):
+    def set_line_parametes(self):
         try:
             dir = '../test_lebot/src/ros_lebot/src/scripts/color_parameters.json'
             with open(dir) as f:
@@ -142,12 +141,10 @@ class Basket:
 
 
 if __name__ == '__main__':  # Need to have color get_param in loop for updating from signal.
-    rospy.init_node('basket_calc', anonymous=False)
+    rospy.init_node('line_finder', anonymous=False)
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    color = rospy.get_param("basket_color")
-    Basket(color, alt_dist=True)
-    rospy.logwarn(color)
+    Line()
     rate.sleep()
     rospy.spin()
 
