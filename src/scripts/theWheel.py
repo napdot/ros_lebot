@@ -14,6 +14,7 @@ class Move:
         self.wheel_sub = rospy.Subscriber("/wheel_values", Wheel, self.wheel_callback, queue_size=1)
         self.thrower_sub = rospy.Subscriber("/thrower_values", Thrower, self.thrower_callback, queue_size=1)
         self.ser_type = nelli
+        self.correction = [-1.3, -1, -1]
 
     def move_to(self, w1, w2, w3):
         if self.ser_type:
@@ -24,7 +25,10 @@ class Move:
         rospy.loginfo(sot)
 
     def wheel_callback(self, data):
-        self.move_to(data.w1, data.w2, data.w3)
+        w1 = int(data.w1 * self.correction[0])
+        w2 = int(data.w2 * self.correction[1])
+        w3 = int(data.w3 * self.correction[2])
+        self.move_to(w1, w2, w3)
 
     def throw_at(self, t1):
         if self.ser_type:

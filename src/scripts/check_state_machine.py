@@ -52,9 +52,9 @@ class Logic:
         self.current_state = None
 
         self.min_ball_dist = min_dist
-        self.orientation_offset_mov = 10 * np.pi / 180
-        self.orientation_offset = 6 * np.pi / 180
-        self.orientation_offset_rot = 6 * np.pi / 180
+        self.orientation_offset_mov = 12 * np.pi / 180
+        self.orientation_offset = 10 * np.pi / 180
+        self.orientation_offset_rot = 10 * np.pi / 180
         self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
@@ -114,7 +114,7 @@ class Logic:
             if next:
                 self.current_state = 'ImAtBall'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
             return
             self.counter = self.counter + 1
             return
@@ -124,7 +124,7 @@ class Logic:
             if next:
                 self.current_state = 'Go'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -143,7 +143,7 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -153,7 +153,7 @@ class Logic:
             if next:
                 self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -215,6 +215,7 @@ class Logic:
             self.current_state = 'FindBall'
             self.counter = 0
             rospy.logwarn('DEBUG: Ball Unoriented')
+            return
 
         else:   # Ball in sight
             angle = calc_angle(self.ball_x)
@@ -359,7 +360,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=450, node_rate=myRate)
+    fb = Logic(min_dist=350, node_rate=myRate)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)

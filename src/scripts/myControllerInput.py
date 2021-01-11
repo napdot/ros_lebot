@@ -50,13 +50,13 @@ class Cont:
                 self.thrower_speed = self.thrower_min
 
         if report.dpad_up:
-            self.message.w1 = self.default_speed
-            self.message.w2 = -self.default_speed
+            self.message.w1 = -self.default_speed
+            self.message.w2 = self.default_speed
             self.message.w3 = 0
 
         elif report.dpad_down:
-            self.message.w1 = -self.default_speed
-            self.message.w2 = self.default_speed
+            self.message.w1 = self.default_speed
+            self.message.w2 = -self.default_speed
             self.message.w3 = 0
 
         elif report.dpad_left:
@@ -69,11 +69,11 @@ class Cont:
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
 
-        if not ((138 > report.left_analog_x > 118) and (138 > (255-report.left_analog_y) > 118)):
-            y_interp = np.interp((255-report.left_analog_y), [0, 255], [-self.controller_max_speed, self.controller_max_speed])
-            x_interp = np.interp(report.left_analog_x, [0, 255], [-self.controller_max_speed, self.controller_max_speed])
-            w1, w2, w3 = ots(y_interp, x_interp)
-            self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
+        #if not ((138 > report.left_analog_x > 118) and (138 > (255-report.left_analog_y) > 118)):
+        #    y_interp = np.interp((255-report.left_analog_y), [0, 255], [-self.controller_max_speed, self.controller_max_speed])
+        #    x_interp = np.interp(report.left_analog_x, [0, 255], [-self.controller_max_speed, self.controller_max_speed])
+        #    w1, w2, w3 = ots(y_interp, x_interp)
+        #    self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
 
         self.controller_pub.publish(self.message)
 
