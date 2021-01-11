@@ -79,7 +79,7 @@ class Logic:
             return
 
         if self.stuck_at_state:
-            self.current_state = 'MoveAround'
+            self.current_state = 'Stuck'
             self.counter = 0
             next = self.stuck_at_state_action()
             if next:
