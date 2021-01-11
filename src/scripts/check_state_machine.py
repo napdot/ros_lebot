@@ -58,7 +58,7 @@ class Logic:
         self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
-        self.throw_duration = 1.5 # in seconds
+        self.throw_duration = 1.5   # in seconds
         self.stuck_at_state = False
    
     def stop_wheel(self):
@@ -72,10 +72,22 @@ class Logic:
         if self.counter >= (self.rate * 4) and state != "Pause":
             self.current_state = 'Standby'
             self.counter = 0
-            self.stuck_at_state = True
+            self.stuck_at_state = False  # False as hasn't been developed yet
 
         if state == 'Pause':
             self.counter = 0
+            return
+
+        if self.stuck_at_state:
+            self.current_state = 'MoveAround'
+            self.counter = 0
+            next = self.stuck_at_state_action()
+            if next:
+                self.stuck_at_state = False
+                self.current_state = 'Standby'
+                self.counter = 0
+                return
+            self.counter = self.counter + 1
             return
 
         if state == 'Standby':  # Changes to findBall state.
@@ -330,6 +342,9 @@ class Logic:
 
     def pause_action(self):
         pass
+
+    def stuck_at_state_action(self):
+        return True
 
 
 
