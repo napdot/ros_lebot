@@ -60,8 +60,8 @@
         document.getElementById("action").innerHTML = "Published message";
         document.getElementById("msg").innerHTML = e.data;
     }
-    function resumeButtonFunction(e) {
-        document.getElementById("action").innerHTML = "Resume button pressed";
+    function redButtonFunction(e) {
+        document.getElementById("action").innerHTML = "Resume and Red button pressed";
         let RefMessage = new ROSLIB.Message({
             data: '{"signal":"start","targets":["LeBot"],"baskets":["magenta"]}'
          });
@@ -76,6 +76,15 @@
         refTopic.publish(RefMessage);
         document.getElementById("msg").innerHTML = '{"signal":"stop","targets":["LeBot"]}';
     }
+    function blueButtonFunction(e) {
+        document.getElementById("action").innerHTML = "Resume and Blue button pressed";
+        let RefMessage = new ROSLIB.Message({
+            data: '{"signal":"start","targets":["LeBot"],"baskets":["blue"]}'
+         });
+        refTopic.publish(RefMessage);
+        document.getElementById("msg").innerHTML = '{"signal":"start","targets":["LeBot"],"baskets":["blue"]}';
+    }
+
 </script>
 </head>
 
@@ -85,7 +94,10 @@
   <p>Last messaged published: <span id="msg"></span></p>
   <p>Latest action: <span id="action"></span></p>
   <p>Websocket status: <span id="ws_status"></span></p>
-  <p><button id="resumeButton" type="button" onclick="resumeButtonFunction()">Resume</button></p>
   <p><button id="pauseButton" type="button" onclick="pauseButtonFunction()">Pause</button></p>
+  <p>
+      <button id="blue" type="button" onclick="blueButtonFunction()">Blue and Resume"</button>
+      <button id="red" type="button" onclick="redButtonFunction()">Red and Resume"</button>
+  </p>
 </body>
 </html>
