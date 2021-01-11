@@ -41,5 +41,5 @@ class Move:
 if __name__ == '__main__':
     rospy.init_node('vruum', anonymous=False)
     # True is test robot. False for LeBot.
-    IWhoMoves = Move(nelli=True)
+    IWhoMoves = Move(nelli=False)
     rospy.spin()

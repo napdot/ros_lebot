@@ -93,7 +93,7 @@ class Logic:
         if state == 'Standby':  # Changes to findBall state.
             next = self.standby_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'FindBall'
                 self.counter = 0
                 return
             self.counter = self.counter + 1
@@ -141,7 +141,7 @@ class Logic:
         elif state == 'Go':  # Move and set thrower speed until ball out of range.
             next = self.go_action()
             if next:
-                self.current_state = 'Throw'
+                self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 return
