@@ -58,15 +58,21 @@ class Logic:
         self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
+        self.throw_duration = 1.5 # in seconds
+        self.stuck_at_state = False
    
     def stop_wheel(self):
         moveValues = [0, 0, 0]
         self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
         self.move.publish(self.msg)
 
-
     def execute_state(self, state):
         self.pub_state_string()
+
+        if self.counter >= (self.rate * 4) and state != "Pause":
+            self.current_state = 'Standby'
+            self.counter = 0
+            self.stuck_at_state = True
 
         if state == 'Pause':
             self.counter = 0
@@ -86,7 +92,7 @@ class Logic:
             if next:
                 self.current_state = 'GetToBall'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -200,8 +206,8 @@ class Logic:
 
         else:   # Ball in sight
             angle = calc_angle(self.ball_x)
-            logangle = angle * 180 / np.pi
-            rospy.logwarn(logangle)
+            # logangle = angle * 180 / np.pi
+            # rospy.logwarn(logangle)
             yP, xP = tcc(self.ball_d, angle)
             if self.ball_d > self.min_ball_dist:  # Not yet near ball
                 moveValues = approachBall(xP, yP)
@@ -306,7 +312,7 @@ class Logic:
             rospy.logwarn('DEBUG: Basket lost')
             return False
 
-        elif self.throwing_counter >= self.rate * 2:   # Termination of throwing
+        elif self.throwing_counter >= self.rate * self.throw_duration:   # Termination of throwing
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(1000)
             self.throw.publish(self.thrower_msg)
