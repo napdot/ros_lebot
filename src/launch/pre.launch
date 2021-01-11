@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="lebot" type="state_machine_alt.py" name="GameLogic"/>
+    <node pkg="lebot" type="check_state_machine.py" name="GameLogic"/>
     <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
     <node pkg="lebot" type="theBasket.py" name="iFindBasket"/>
     <node pkg="lebot" type="referee.py" name="iAndRef"/>
