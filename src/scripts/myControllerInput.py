@@ -109,7 +109,7 @@ class Cont:
             self.thrower_pub.publish(self.thrower_message)
             self.was_throwing = True
 
-        if (not report.button_cross) and self.was_throwing:
+        elif (not report.button_cross) and self.was_throwing:
             self.thrower_message.t1 = 1000
             self.thrower_pub.publish(self.thrower_message)
             self.was_throwing = False
