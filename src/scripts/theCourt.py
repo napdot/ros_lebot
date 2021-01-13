@@ -12,6 +12,24 @@ import math
 from skimage.draw import line
 
 
+def line(p1, p2):
+    A = (p1[1] - p2[1])
+    B = (p2[0] - p1[0])
+    C = (p1[0]*p2[1] - p2[0]*p1[1])
+    return A, B, -C
+
+def intersection(L1, L2):
+    D = L1[0] * L2[1] - L1[1] * L2[0]
+    Dx = L1[2] * L2[1] - L1[1] * L2[2]
+    Dy = L1[0] * L2[2] - L1[2] * L2[0]
+    if D != 0:
+        x = Dx / D
+        y = Dy / D
+        return x, y
+    else:
+        return False
+
+
 
 class Line:
     def __init__(self):
@@ -21,23 +39,25 @@ class Line:
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location = rospy.Publisher("/line", LineLocation, queue_size=1)
 
-        self.hsv = np.zeros((480, 650, 3), np.uint16)
-        self.thresh = np.zeros((480, 650, 3), np.uint16)
+        self.hsv = np.zeros((480, 640, 3), np.uint16)
+        self.thresh = np.zeros((480, 640, 3), np.uint16)
 
         self.line_message = LineLocation()
         self.kernel = np.ones((3, 3), np.uint8)
-        self.hsv = np.zeros((480, 650, 3), np.uint16)
-        self.thresh = np.zeros((480, 650, 3), np.uint16)
+        self.hsv = np.zeros((480, 640, 3), np.uint16)
+        self.thresh = np.zeros((480, 640, 3), np.uint16)
 
         self.color_bridge = CvBridge()
         self.kernel_size = 5
+
+        self.mid_line = line(self.mid_line[0], self.mid_line[1])
 
     def get_my_image_callback(self, data):
         try:
             color_image = self.color_bridge.imgmsg_to_cv2(data, data.encoding)
         except CvBridgeError as e:
             print(e)
-            color_image = np.zeros((480, 650, 3), np.uint16)
+            color_image = np.zeros((480, 640, 3), np.uint16)
 
         hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
         self.hsv = cv2.GaussianBlur(hsv, (self.kernel.size, self.kernel_size), 0)
@@ -60,34 +80,48 @@ class Line:
         return
 
     def get_line_location(self):
-        min_length = 40
+        minLineLength = 40
+        max_length = 0
+        maxLineGap = 100
         try:
-            edges = cv2.Canny(self.thresh, 50, 200)
-            lines = cv2.HoughLinesP(edges, 1, np.pi / 180, max_slider, minLineLength=50, maxLineGap=500)
+            edges = cv2.Canny(self.thresh, 50, 150, apertureSize=3)
+            lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength, maxLineGap)
+
             lengths = []
             max_index = -1
-            max_length = 0
+            max_p0 = 0
+            max_p1 = 0
 
-            for index, line in enumerate(lines):
-                x1, y1, x2, y2 = line[0]
-                p0, p1 = [x1, y1], [x2, y2]
-                length_of_line = np.sqrt(((p0[0]-p0[1])**2)+((p1[0]-p1[1])**2))
+            for index, l in enumerate(lines):
+                x1, y1, x2, y2 = l[0]
+                p0 = [x1, y1]
+                p1 = [x2, y2]
+                length_of_line = np.linalg.norm(p1-p0)
                 lengths.append(length_of_line)
+
                 if length_of_line > max_length:
                     max_length = length_of_line
                     max_index = index
+                    max_p0 = p0
+                    max_p1 = p1
 
-            if (lengths[max_index] > min_length) and (len(lines) > 0):
+            if (lengths[max_index] > minLineLength) and (len(lines) > 0):
+                new_line = line(max_p0, max_p1)
+                point = intersection(new_line, self.mid_line)
+                if point:
+                    if not (0 < point[1] < 480):
+                        point[1] = 0
+                    if not (0 < point[0] < 640):
+                        point[0] = 0
 
-                # being start and end two points (x1,y1), (x2,y2)
-                discrete_line = list(zip(*line(*start, *end)))
+                    self.line_location = point[0], point[1]
 
-                self.line_location = [cX, cY]
+                self.line_location = [0, 0]
             else:
-                self.line_location = [0, 480]
+                self.line_location = [0, 0]
 
         except:
-            self.line_location = [0, 480]
+            self.line_location = [0, 0]
 
     def transform_location(self, loc):
         tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
