@@ -83,7 +83,7 @@ class Logic:
         self.stuck_at_state = False
         self.can_get_stuck = stuck_activated
         self.stuck_counter = 0
-        self.stuck_max = 20000
+        self.stuck_max = node_rate * 10
    
     def stop_wheel(self):
         moveValues = [0, 0, 0]
