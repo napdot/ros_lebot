@@ -57,8 +57,21 @@ class Logic:
         self.detect_line = line_detection
 
         self.min_ball_dist = min_dist
+
+        """
+        Orientation offsets must follow these conditions:
+        find < rot < mov
+        throw is independent but ideally < find
+        
+        Small find makes it harder to start moving to balls, especially if they are far.
+        Small mov, makes it run much slower due to more need to correct orientation to balls.
+        Small rot, makes it so that we correct our orientation to more frequently while finding baskets. However, we
+        would want it to be fairly small for better throwing.
+        Small throw would be the most ideal. Tradeoff would only be speed.
+        """
+
         self.orientation_offset_mov = 12 * np.pi / 180
-        self.orientation_offset = 10 * np.pi / 180
+        self.orientation_offset_find = 10 * np.pi / 180
         self.orientation_offset_rot = 10 * np.pi / 180
         self.orientation_offset_throw = 6 * np.pi / 180
         self.distance_offset = 40
@@ -209,7 +222,7 @@ class Logic:
             else:  # Ball in sight.
                 if self.line_y > self.ball_y:   # Ball inside
                     angle = calc_angle_cam(self.ball_x)
-                    if abs(angle) > self.orientation_offset:
+                    if abs(angle) > self.orientation_offset_find:
                         moveValues = orient(self.ball_x)
                         self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
                             moveValues[2])
@@ -236,7 +249,7 @@ class Logic:
                 return False    # Continue rotation
             else:  # Ball in sight.
                 angle = calc_angle_cam(self.ball_x)
-                if abs(angle) > self.orientation_offset:
+                if abs(angle) > self.orientation_offset_find:
                     moveValues = orient(self.ball_x)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
@@ -342,7 +355,7 @@ class Logic:
             coord = align_throw(ball_xP, ball_yP, basket_xP, basket_yP, self.min_ball_dist)
 
             if coord[0] < 100 and coord[1] < 100:    # Ugh, dont' know what values .-.
-                if basket_angle > self.orientation_offset:
+                if basket_angle > self.orientation_offset_find:
                     moveValues = orient(self.basket_x)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
