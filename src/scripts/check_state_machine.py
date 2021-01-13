@@ -119,6 +119,8 @@ class Logic:
                 self.stuck_at_state = False
                 self.current_state = 'Standby'
                 self.counter = 0
+                self.stuck_counter = 0
+                self.last_state = 'Standby'
                 return
             self.stuck_counter = self.stuck_counter + 1
             return
