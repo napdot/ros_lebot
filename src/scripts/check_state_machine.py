@@ -29,7 +29,7 @@ from lebot.msg import LineLocation
 # ______________________________________________________________________________________________________________________
 
 class Logic:
-    def __init__(self, min_dist, node_rate, line_detection):
+    def __init__(self, min_dist, node_rate, line_detection, stuck_activated):
         self.move = rospy.Publisher('/wheel_values', Wheel, queue_size=1)
         self.throw = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.state_pub = rospy.Publisher('/lebot_state', String, queue_size=1)
@@ -81,6 +81,9 @@ class Logic:
         self.rot = 1
 
         self.stuck_at_state = False
+        self.can_get_stuck = stuck_activated
+        self.stuck_counter = 0
+        self.stuck_max = 20000
    
     def stop_wheel(self):
         moveValues = [0, 0, 0]
@@ -91,24 +94,33 @@ class Logic:
         self.pub_state_string()
 
         if self.counter >= (self.rate * 4) and state != "Pause":
+            self.last_state = self.current_state
             self.current_state = 'Standby'
             self.counter = 0
-            self.stuck_at_state = False  # False as hasn't been developed yet
+            if self.can_get_stuck:
+                self.stuck_at_state = True  # False as hasn't been developed yet
+                self.current_state = 'Stuck'
 
         if state == 'Pause':
             self.counter = 0
             return
 
-        if self.stuck_at_state:
-            self.current_state = 'Stuck'
-            self.counter = 0
-            next = self.stuck_at_state_action()
-            if next:
+        if state == 'Stuck':
+            if self.stuck_counter > self.stuck_max:  # Couldn't get unstuck
+                self.current_state = 'Pause'
+                self.stuck_at_state = False
+                self.counter = 0
+                self.stuck_counter = 0
+                self.last_state = 'Standby'
+                return
+
+            unstuck = self.stuck_at_state_action()
+            if unstuck:
                 self.stuck_at_state = False
                 self.current_state = 'Standby'
                 self.counter = 0
                 return
-            self.counter = self.counter + 1
+            self.stuck_counter = self.stuck_counter + 1
             return
 
         if state == 'Standby':  # Changes to findBall state.
@@ -232,9 +244,9 @@ class Logic:
 
                 else:   # Ball outside
                     if self.line_x > 0:
-                        self.rot = 1
-                    elif self.line_x < 0:
                         self.rot = -1
+                    elif self.line_x < 0:
+                        self.rot = 1
                     moveValues = fball(self.rot)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
@@ -398,9 +410,184 @@ class Logic:
         pass
 
     def stuck_at_state_action(self):
-        return True
+        if self.last_state == 'FindBall':
+            # First half, same as findBall but slower
+            if self.stuck_counter < self.stuck_max / 2:
+                if self.detect_line:
+                    if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
+                        moveValues = fball(self.rot * 0.5)
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                        self.move.publish(self.msg)
+                        return False  # Continue rotation
+                    else:  # Ball in sight.
+                        if self.line_y > self.ball_y:  # Ball inside
+                            angle = calc_angle_cam(self.ball_x)
+                            if abs(angle) > self.orientation_offset_find:
+                                moveValues = orient(self.ball_x * 0.5)
+                                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                                self.move.publish(self.msg)
+                                return False  # Continue rotating until oriented to ball
+                            return True  # Proceed to get_to_ball
 
+                        else:  # Ball outside
+                            if self.line_x > 0:
+                                self.rot = 1
+                            elif self.line_x < 0:
+                                self.rot = -1
+                            moveValues = fball(self.rot * 0.5)
+                            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                            self.move.publish(self.msg)
+                            return False  # Continue rotation
 
+                else:
+                    if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
+                        moveValues = fball(self.rot)
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                            moveValues[2])
+                        self.move.publish(self.msg)
+                        return False  # Continue rotation
+                    else:  # Ball in sight.
+                        angle = calc_angle_cam(self.ball_x)
+                        if abs(angle) > self.orientation_offset_find:
+                            moveValues = orient(self.ball_x)
+                            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                moveValues[2])
+                            self.move.publish(self.msg)
+                            return False  # Continue rotating until oriented to ball
+                        return True  # Proceed to get_to_ball
+
+            # Second half, move at certain distance to basket hopefully finding a ball
+            elif self.stuck_counter < self.stuck_max:
+                if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
+                    if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
+                        moveValues = fbasket(1)
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                            moveValues[2])
+                        self.move.publish(self.msg)
+                        return False  # Continue until basket is found
+
+                    basket_angle = calc_angle_cam(self.basket_x)
+
+                    if abs(basket_angle) > self.orientation_offset_find:  # Orientation to basket is off
+                        if self.basket_x > 0:
+                            self.rot = 1
+                        else:
+                            self.rot = -1
+                        moveValues = fbasket(self.rot)  # 1 or -1 according to rotation directions
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                            moveValues[2])
+                        self.move.publish(self.msg)
+                        return False  # Continue rotating until oriented to basket
+
+                    elif self.basket_d > 2500:
+                        moveValues = [-20, 20, 0]   # Forward
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                        self.move.publish(self.msg)
+                        return False
+
+                    elif self.basket_d < 1500:
+                        moveValues = [20, -20, 0]   # Backwards
+                        self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                        self.move.publish(self.msg)
+                        return False
+
+                else:
+                    if self.detect_line:
+                        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
+                            moveValues = fball(self.rot * 0.5)
+                            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                moveValues[2])
+                            self.move.publish(self.msg)
+                            return False  # Continue rotation
+                        else:  # Ball in sight.
+                            if self.line_y > self.ball_y:  # Ball inside
+                                angle = calc_angle_cam(self.ball_x)
+                                if abs(angle) > self.orientation_offset_find:
+                                    moveValues = orient(self.ball_x * 0.5)
+                                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                        moveValues[2])
+                                    self.move.publish(self.msg)
+                                    return False  # Continue rotating until oriented to ball
+                                return True  # Proceed to get_to_ball
+
+                            else:  # Ball outside
+                                if self.line_x > 0:
+                                    self.rot = 1
+                                elif self.line_x < 0:
+                                    self.rot = -1
+                                moveValues = fball(self.rot * 0.5)
+                                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                    moveValues[2])
+                                self.move.publish(self.msg)
+                                return False  # Continue rotation
+
+                    else:
+                        if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # No ball in sight
+                            moveValues = fball(self.rot)
+                            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                moveValues[2])
+                            self.move.publish(self.msg)
+                            return False  # Continue rotation
+                        else:  # Ball in sight.
+                            angle = calc_angle_cam(self.ball_x)
+                            if abs(angle) > self.orientation_offset_find:
+                                moveValues = orient(self.ball_x)
+                                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(
+                                    moveValues[2])
+                                self.move.publish(self.msg)
+                                return False  # Continue rotating until oriented to ball
+                            return True  # Proceed to get_to_ball
+
+        elif self.last_state == 'GetToBall':    # Reset ball
+            if not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
+                if self.ball_d <  self.min_ball_dist + 500: # Get away (most probably facing the basket way upclose)
+                    moveValues = [20, -20, 0]  # Backwards
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False
+
+                else:
+                    moveValues = fball(self.rot)
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False  # Continue rotation
+            else:
+                return True
+
+        elif self.last_state == 'ImAtBall':  # Reset Ball
+            if not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
+                if self.ball_d < self.min_ball_dist + 200:  # Get away (most probably facing the basket way upclose)
+                    moveValues = [20, -20, 0]  # Backwards
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False
+
+                else:
+                    moveValues = fball(self.rot)
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False  # Continue rotation
+            else:
+                return True
+
+        elif self.last_state == 'Go':  # Reset Ball
+            if not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
+                if self.ball_d < self.min_ball_dist + 500:
+                    moveValues = [20, -20, 0]  # Backwards
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False
+
+                else:
+                    moveValues = fball(self.rot)
+                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.move.publish(self.msg)
+                    return False
+            else:
+                return True
+
+        elif self.last_state == 'Standby':
+            return True
 
 # ______________________________________________________________________________________________________________________
 
@@ -413,7 +600,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=350, node_rate=myRate, line_detection=False)
+    fb = Logic(min_dist=350, node_rate=myRate, line_detection=False, stuck_activated=False)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
