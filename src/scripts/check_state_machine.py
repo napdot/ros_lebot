@@ -23,6 +23,7 @@ from lebot.msg import Depth_BallLocation
 from lebot.msg import Depth_BasketLocation
 from lebot.msg import Ref_Command
 from lebot.msg import Thrower
+from lebot.msg import LineLocation
 
 
 # ______________________________________________________________________________________________________________________
@@ -35,6 +36,7 @@ class Logic:
         self.ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, self.ball_callback, queue_size=1)
         self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
         self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
+        self.line_subscriber = rospy.Subscriber('/line', LineLocation, self.line_callback, queue_size=1)
 
         self.state_string = String()
 
@@ -48,6 +50,7 @@ class Logic:
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
+        self.line_x, self.line_y = 0, 0
 
         self.current_state = None
 
@@ -59,6 +62,7 @@ class Logic:
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 1.5   # in seconds
+
         self.stuck_at_state = False
    
     def stop_wheel(self):
@@ -164,6 +168,9 @@ class Logic:
 
     def basket_callback(self, data):
         self.basket_x, self.basket_y, self.basket_d = data.x, data.y, data.d
+
+    def line_callback(self, data):
+        self.line_x, self.line_y = data.x, data.y
 
     def referee_callback(self, data):
         command_string = data.command
