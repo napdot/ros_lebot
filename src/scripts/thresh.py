@@ -42,6 +42,7 @@ cap = cv2.VideoCapture(4)
 
 while cap.isOpened():
     _, bgr = cap.read()
+    cv2.imshow('bgr', bgr)
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, tuple(filters["min"]), tuple(filters["max"]))
     cv2.imshow("mask", mask)

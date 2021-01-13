@@ -7,7 +7,7 @@
     <script type = "text/javascript">
 
     var refTopic = "/js_ref";
-    var websocketAddr = "ws://demos.kaazing.com/echo"
+    var websocketAddr = "ws://192.168.2.220:8111"
     var RosAddr = "ws://0.0.0.0:9090"
     var ros = new ROSLIB.Ros({
         url : RosAddr
@@ -48,7 +48,7 @@
     };
 
     function onMessage(e) {
-        let jsString = JSON.stringify(e);
+        let jsString = e;
         pubRos(jsString);
     }
 
