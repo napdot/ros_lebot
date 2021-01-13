@@ -26,9 +26,9 @@ class Basket:
         self.color_sub = rospy.Subscriber("/color_ref", String, self.color_callback, queue_size=1)
 
         self.basket_depth_location_pub = rospy.Publisher("basket", Depth_BasketLocation, queue_size=1)
-        self.hsv = np.zeros((480, 650, 3), np.uint16)
-        self.thresh = np.zeros((480, 650, 3), np.uint16)
-        self.depth = np.zeros((480, 650, 3), np.uint16)
+        self.hsv = np.zeros((480, 640, 3), np.uint16)
+        self.thresh = np.zeros((480, 640, 3), np.uint16)
+        self.depth = np.zeros((480, 640, 3), np.uint16)
         self.basket_message = Depth_BasketLocation()
         self.kernel = np.ones((3, 3), np.uint8)
         self.depth_bridge = CvBridge()
@@ -43,7 +43,7 @@ class Basket:
             color_image = self.color_bridge.imgmsg_to_cv2(data, data.encoding)
         except CvBridgeError as e:
             print(e)
-            color_image = np.zeros((480, 650, 3), np.uint16)
+            color_image = np.zeros((480, 640, 3), np.uint16)
 
         self.hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
         self.get_thresh()
@@ -54,7 +54,7 @@ class Basket:
             self.depth = np.array(self.depth_bridge.imgmsg_to_cv2(data, desired_encoding="passthrough"), dtype=np.float32)
         except CvBridgeError as e:
             print(e)
-            self.depth = np.zeros((480, 650), np.float32)
+            self.depth = np.zeros((480, 640), np.float32)
 
         self.get_basket_location()
         self.get_depth_to_basket()
