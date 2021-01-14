@@ -4,7 +4,7 @@
     <node pkg="lebot" type="theBasket.py" name="iFindBasket"/>
     <node pkg="lebot" type="referee.py" name="iAndRef"/>
     <node pkg="lebot" type="theWheel.py" name="RosToWheel"/>
-    <node pkg="lebot" type="myControllerInput.py" name="ControllerToRos"/>
+    #<node pkg="lebot" type="myControllerInput.py" name="ControllerToRos"/>
     <param name="basket_color" type="string" value="blue"/>
     <param name="lebot_rate" type="int" value="27"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
