@@ -37,7 +37,7 @@ class Line:
         self.line_parameters = {"min": [151, 98, 87], "max": [179, 232, 214]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
-        self.line_location = rospy.Publisher("/line", LineLocation, queue_size=1)
+        self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)
 
         self.hsv = np.zeros((480, 640, 3), np.uint16)
         self.thresh = np.zeros((480, 640, 3), np.uint16)
@@ -50,7 +50,7 @@ class Line:
         self.color_bridge = CvBridge()
         self.kernel_size = 5
 
-        self.mid_line = line(self.mid_line[0], self.mid_line[1])
+        self.mid_line = line([320, 0], [320, 480])
 
     def get_my_image_callback(self, data):
         try:
@@ -64,7 +64,7 @@ class Line:
         self.get_thresh()
         self.get_line_location()
         self.update_line_message()
-        self.line_location.publish(self.line_message)
+        self.line_location_pub.publish(self.line_message)
         return
 
 
