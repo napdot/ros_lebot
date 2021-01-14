@@ -12,7 +12,7 @@ When the camera finds the ball, the robot can start approaching to it.
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
 speedCut = 0.3 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
-def findBall():
+def findBall(rot):
     """
     if not(found):
         # TODO
@@ -23,7 +23,7 @@ def findBall():
         mSer = np.array([[0], [0], [0]]) # stop when the ball is found
     return mSer
     """
-    rotation = 1
+    rotation = rot
     mSer = np.rint(np.multiply(np.multiply(np.multiply(np.array([[1], [1], [1]]), rotation), maxSpeedEnc), speedCut))
     return mSer
 

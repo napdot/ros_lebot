@@ -7,8 +7,21 @@ from lebot.msg import Wheel
 from lebot.msg import Thrower
 from scipy.interpolate import interp1d
 import numpy as np
-from omni import omni_to_serial as ots
-#from movement.approachBall import approachBall as ots
+#from omni import omni_to_serial as ots
+from movement.approachBall import approachBall as ots
+
+
+def dz_radial(x_inp, y_inp, deadzone):
+    input_magnitude = np.linalg.norm([x_inp, y_inp])
+    if input_magnitude < deadzone:
+        return 0, 0
+    else:
+        return x_inp, y_inp
+
+def interp_input(x_inp, y_inp):
+    x_norm = np.interp(x_inp, [0, 255], [-320, 320])
+    y_norm = np.interp(y_inp, [0, 255], [-480, 480])
+    return x_norm, y_norm
 
 
 class Cont:
@@ -28,7 +41,7 @@ class Cont:
         self.thrower_min = 1000
         self.thrower_max = 2000
         self.maxSpeedEnc = 100
-
+        self.was_throwing = False
 
     def controller_callback(self, data):
         report = Report()
@@ -38,7 +51,7 @@ class Cont:
         self.message.w2 = 0
         self.message.w3 = 0
         self.thrower_message.t1 = 1000
-	
+
         if report.button_square:
             self.thrower_speed = self.thrower_speed + 1
             if self.thrower_speed >= self.thrower_max:
@@ -53,29 +66,33 @@ class Cont:
             self.message.w1 = -self.default_speed
             self.message.w2 = self.default_speed
             self.message.w3 = 0
+            self.controller_pub.publish(self.message)
 
         elif report.dpad_down:
             self.message.w1 = self.default_speed
             self.message.w2 = -self.default_speed
             self.message.w3 = 0
+            self.controller_pub.publish(self.message)
 
         elif report.dpad_left:
             self.message.w1 = -self.default_speed
             self.message.w2 = -self.default_speed
             self.message.w3 = -self.default_speed
+            self.controller_pub.publish(self.message)
 
         elif report.dpad_right:
             self.message.w1 = self.default_speed
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
+            self.controller_pub.publish(self.message)
 
-        #if not ((138 > report.left_analog_x > 118) and (138 > (255-report.left_analog_y) > 118)):
-        #    y_interp = np.interp((255-report.left_analog_y), [0, 255], [-self.controller_max_speed, self.controller_max_speed])
-        #    x_interp = np.interp(report.left_analog_x, [0, 255], [-self.controller_max_speed, self.controller_max_speed])
-        #    w1, w2, w3 = ots(y_interp, x_interp)
-        #    self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
-
-        self.controller_pub.publish(self.message)
+        elif report.left_analog_x or report.left_analog_y:
+            x, y = interp_input(report.left_analog_x, report.left_analog_y)
+            new_x, new_y = dz_radial(x, y, 40)
+            if new_x != 0 or new_y != 0:
+                moveValues = approachBall(new_y, new_x)
+                self.message.w1, self.message.w2, self.message.w3 = moveValues
+                self.controller_pub.publish(self.message)
 
         if report.button_options:
             start_msg = String()
@@ -89,9 +106,13 @@ class Cont:
 
         if report.button_cross:
             self.thrower_message.t1 = self.thrower_speed
+            self.thrower_pub.publish(self.thrower_message)
+            self.was_throwing = True
 
-        self.thrower_pub.publish(self.thrower_message)
-
+        elif (not report.button_cross) and self.was_throwing:
+            self.thrower_message.t1 = 1000
+            self.thrower_pub.publish(self.thrower_message)
+            self.was_throwing = False
 
 
 if __name__ == '__main__':

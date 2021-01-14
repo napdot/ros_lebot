@@ -55,6 +55,7 @@ add_message_files(
   FILES
   Depth_BallLocation.msg
   Depth_BasketLocation.msg
+  LineLocation.msg
   Wheel.msg
   Thrower.msg
   Ref_Command.msg
@@ -175,6 +176,7 @@ catkin_install_python(PROGRAMS
     src/scripts/referee.py
     src/scripts/theBall.py
     src/scripts/theBasket.py
+    src/scripts/theCourt.py
     src/scripts/state_machine_alt.py
     src/scripts/check_state_machine.py
     src/scripts/transfCamCoord.py

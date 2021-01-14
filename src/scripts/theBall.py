@@ -23,9 +23,9 @@ class Ball:
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.depth_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_my_depth_callback, queue_size=1)
         self.ball_depth_location_pub = rospy.Publisher("ball", Depth_BallLocation, queue_size=1)
-        self.hsv = np.zeros((480, 650, 3), dtype=np.float32)
-        self.thresh = np.zeros((480, 650, 3), dtype=np.float32)
-        self.depth = np.zeros((480, 650, 3), dtype=np.float32)
+        self.hsv = np.zeros((480, 640, 3), dtype=np.float32)
+        self.thresh = np.zeros((480, 640, 3), dtype=np.float32)
+        self.depth = np.zeros((480, 640, 3), dtype=np.float32)
         self.ball_message = Depth_BallLocation()
         self.kernel = np.ones((3, 3), np.uint8)
         self.depth_bridge = CvBridge()
@@ -36,7 +36,7 @@ class Ball:
             color_image = self.color_bridge.imgmsg_to_cv2(data, data.encoding)
         except CvBridgeError as e:
             print(e)
-            color_image = np.zeros((480, 650, 3), np.uint16)
+            color_image = np.zeros((480, 640, 3), np.uint16)
 
         self.hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
         self.get_thresh()
@@ -47,7 +47,7 @@ class Ball:
             self.depth = np.array(self.depth_bridge.imgmsg_to_cv2(data, desired_encoding="passthrough"), dtype=np.float32)
         except CvBridgeError as e:
             print(e)
-            self.depth = np.zeros((480, 650), np.float32)
+            self.depth = np.zeros((480, 640), np.float32)
 
 
         self.get_ball_location()
