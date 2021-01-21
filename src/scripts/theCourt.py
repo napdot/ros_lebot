@@ -113,7 +113,7 @@ class Line:
                 if point:
                     f_point[0] = point[0]
                     f_point[1] = point[1]
-                    if not (170 < point[1] < 440):  # Vision margin
+                    if not (160 < point[1] < 310):  # Vision margin
                         f_point[1] = 0
                         f_point[0] = 0
                     if not (0 < point[0] < 640):
