@@ -123,7 +123,6 @@ class Line:
 
                     self.line_location = point[0], point[1]
 
-                self.line_location = [0, 0]
             else:
                 self.line_location = [0, 0]
 
