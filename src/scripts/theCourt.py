@@ -109,10 +109,12 @@ class Line:
                 new_line = line(max_p0, max_p1)
                 point = intersection(new_line, self.mid_line)
                 if point:
-                    if not (0 < point[1] < 480):
+                    if not (200 < point[1] < 380):  # Vision margin
                         point[1] = 0
+                        point[0] = 0
                     if not (0 < point[0] < 640):
                         point[0] = 0
+                        point[1] = 0
 
                     self.line_location = point[0], point[1]
 
