@@ -34,7 +34,7 @@ def intersection(L1, L2):
 class Line:
     def __init__(self):
         self.line_location = [0, 0]
-        self.line_parameters = {"min": [151, 98, 87], "max": [179, 232, 214]}
+        self.line_parameters = {"min": [32], "max": [81]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)
@@ -59,8 +59,9 @@ class Line:
             print(e)
             color_image = np.zeros((480, 640, 3), np.uint16)
 
-        hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
-        self.hsv = cv2.GaussianBlur(hsv, (self.kernel.size, self.kernel_size), 0)
+        gray = cv2.cvtColor(color_image, cv2.COLOR_RGB2GRAY)
+        self.hsv = cv2.GaussianBlur(gray, (self.kernel_size, self.kernel_size), 0)
+
         self.get_thresh()
         self.get_line_location()
         self.update_line_message()
@@ -80,7 +81,7 @@ class Line:
         return
 
     def get_line_location(self):
-        minLineLength = 40
+        minLineLength = 70
         max_length = 0
         maxLineGap = 100
         f_point = [0, 0]
@@ -125,6 +126,7 @@ class Line:
                 self.line_location = [0, 0]
 
         except:
+            rospy.logwarn("No line")
             self.line_location = [0, 0]
 
     def transform_location(self, loc):
