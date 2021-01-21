@@ -3,6 +3,7 @@
     <param name="basket_color" type="string" value="blue"/>
     <node pkg="lebot" type="theBall.py" name="iFindBalls"/>
     <param name="basket_color" type="string" value="blue"/>
+    <node pkg="lebot" type="theCourt.py" name="iStayInside"/>
     <param name="lebot_rate" type="int" value="27"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="align_depth" value="true"/>

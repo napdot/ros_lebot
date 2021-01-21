@@ -98,6 +98,7 @@ class Line:
                 p1 = [x2, y2]
                 length_of_line = np.linalg.norm(p1-p0)
                 lengths.append(length_of_line)
+                rospy.logwarn('Line found')
 
                 if length_of_line > max_length:
                     max_length = length_of_line
@@ -106,13 +107,17 @@ class Line:
                     max_p1 = p1
 
             if (lengths[max_index] > minLineLength) and (len(lines) > 0):
+                rospy.logwarn('Large enough line')
                 new_line = line(max_p0, max_p1)
                 point = intersection(new_line, self.mid_line)
                 if point:
+                    rospy.logwarn('Found intersection point')
                     if not (200 < point[1] < 380):  # Vision margin
                         point[1] = 0
                         point[0] = 0
+                        rospy.logwarn('Outside y interest zone')
                     if not (0 < point[0] < 640):
+                        rospy.logwarn('Outside x scope apparently')
                         point[0] = 0
                         point[1] = 0
 

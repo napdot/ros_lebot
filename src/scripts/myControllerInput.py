@@ -88,11 +88,11 @@ class Cont:
 
         elif report.left_analog_x or report.left_analog_y:
             x, y = interp_input(report.left_analog_x, report.left_analog_y)
-            new_x, new_y = dz_radial(x, y, 40)
+            new_x, new_y = dz_radial(x, y, 70)
             if new_x != 0 or new_y != 0:
                 moveValues = ots(new_y, new_x)
                 w1, w2, w3 = moveValues
-                self.message.w1, self.message.w2, self.message.w3 = int(w1), int(w2), int(w3)
+                self.message.w1, self.message.w2, self.message.w3 = int(-w1), int(-w2), int(-w3)
                 self.controller_pub.publish(self.message)
 
         if report.button_options:
