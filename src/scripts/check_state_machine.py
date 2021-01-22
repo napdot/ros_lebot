@@ -150,7 +150,7 @@ class Logic:
                 self.current_state = 'ImAtBall'
                 self.counter = 0
                 # self.stop_wheel()
-            return
+                return
             self.counter = self.counter + 1
             return
 
@@ -222,6 +222,15 @@ class Logic:
         else:
             return ((self.line_x2 - self.line_x1) * (self.ball_y - self.line_y1) - (self.line_y2 - self.line_y1) * (self.ball_x - self.line_x1)) > 0
 
+    def rotation_orientation_with_line(self):
+        if (self.line_x1 == -320 and self.line_y1 == 480) or (self.line_x2 == -320 and self.line_y2 == 480):
+            return self.rot
+        else:
+            if self.line_y1 > self.line_y2:
+                return -1   # CCW
+            else:
+                return 1    # CW
+
     """
      ___Actions to perform at each state___
      Return True to proceed to next state
@@ -251,10 +260,13 @@ class Logic:
                     return True  # Proceed to get_to_ball
 
                 else:   # Ball outside
+                    """
                     if self.line_x1 > 0:
                         self.rot = -1
                     elif self.line_x1 < 0:
                         self.rot = 1
+                    """
+                    self.rot = self.rotation_orientation_with_line()
                     moveValues = fball(self.rot)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
@@ -548,7 +560,7 @@ class Logic:
 
         elif self.last_state == 'GetToBall':    # Reset ball
             if not (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
-                if self.ball_d <  self.min_ball_dist + 500: # Get away (most probably facing the basket way upclose)
+                if self.ball_d < self.min_ball_dist + 500: # Get away (most probably facing the basket way upclose)
                     moveValues = [20, -20, 0]  # Backwards
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
