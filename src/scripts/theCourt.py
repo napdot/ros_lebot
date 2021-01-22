@@ -11,7 +11,7 @@ import os
 import math
 from skimage.draw import line
 
-
+"""
 def line(p1, p2):
     A = (p1[1] - p2[1])
     B = (p2[0] - p1[0])
@@ -28,12 +28,12 @@ def intersection(L1, L2):
         return x, y
     else:
         return False
-
+"""
 
 
 class Line:
     def __init__(self):
-        self.line_location = [0, 0]
+        self.line_location = [0, 0, 0, 0]
         self.line_parameters = {"min": [32], "max": [81]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
@@ -50,7 +50,15 @@ class Line:
         self.color_bridge = CvBridge()
         self.kernel_size = 5
 
-        self.mid_line = line([320, 0], [320, 480])
+        self.mask = self.gen_mask()
+
+
+        # self.mid_line = line([320, 0], [320, 480])
+
+    def gen_mask(self):
+        mask = np.zeros((480, 640), np.uint16)
+        mask[160:320] = 1
+        return mask
 
     def get_my_image_callback(self, data):
         try:
@@ -73,7 +81,8 @@ class Line:
         kernel = np.ones((3, 3), np.uint8)
         thresh = cv2.inRange(self.hsv, tuple(self.line_parameters['min']), tuple(self.line_parameters['max']))
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        self.thresh = cv2.dilate(thresh, kernel, iterations=1)
+        thresh = cv2.dilate(thresh, kernel, iterations=1)
+        self.thresh = np.multiply(thresh, self.mask)
         return
 
     def update_line_message(self):
@@ -84,15 +93,13 @@ class Line:
         minLineLength = 70
         max_length = 0
         maxLineGap = 100
-        f_point = [0, 0]
+        f_point = [[0, 0], [0, 0]]
         try:
             edges = cv2.Canny(self.thresh, 50, 150, apertureSize=3)
             lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength, maxLineGap)
 
             lengths = []
             max_index = -1
-            max_p0 = 0
-            max_p1 = 0
 
             for index, l in enumerate(lines):
                 x1, y1, x2, y2 = l[0]
@@ -101,33 +108,34 @@ class Line:
                 length_of_line = np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
                 lengths.append(length_of_line)
 
+                # If for some reason, it detect edge of mask as line
+                if (p0[1] < 165) and (p1[1] < 165):
+                    continue
+                if (p0[1] > 315) and (p1[1] > 315):
+                    continue
+
                 if length_of_line > max_length:
                     max_length = length_of_line
                     max_index = index
-                    max_p0 = p0
-                    max_p1 = p1
 
             if (lengths[max_index] > minLineLength) and (len(lines) > 0):
-                new_line = line(max_p0, max_p1)
-                point = intersection(new_line, self.mid_line)
-                if point:
-                    f_point[0] = point[0]
-                    f_point[1] = point[1]
-                    if not (160 < point[1] < 310):  # Vision margin
-                        f_point[1] = 0
-                        f_point[0] = 0
-                    if not (0 < point[0] < 640):
-                        f_point[0] = 0
-                        f_point[1] = 0
+                x1, y1, x2, y2 = lines[max_index][0]
+                # Sorting from left to right
+                if x1 < x2:
+                    f_point[0] = [x1, y1]
+                    f_point[1] = [x2, y2]
+                else:
+                    f_point[0] = [x2, y2]
+                    f_point[1] = [x1, y1]
 
-                    self.line_location = f_point[0], f_point[1]
+                self.line_location = [f_point[0][0], f_point[0][1], f_point[1][0], f_point[1][1]]
 
             else:
-                self.line_location = [0, 0]
+                self.line_location = [0, 0, 0, 0]
 
         except:
             rospy.logwarn("No line")
-            self.line_location = [0, 0]
+            self.line_location = [0, 0, 0, 0]
 
     def transform_location(self, loc):
         tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
