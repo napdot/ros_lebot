@@ -450,10 +450,7 @@ class Logic:
                             return True  # Proceed to get_to_ball
 
                         else:  # Ball outside
-                            if self.line_x1 > 0:
-                                self.rot = 1
-                            elif self.line_x1 < 0:
-                                self.rot = -1
+                            self.rot = self.rotation_orientation_with_line()
                             moveValues = fball(self.rot * 0.5)
                             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                             self.move.publish(self.msg)
