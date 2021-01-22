@@ -140,7 +140,7 @@ class Logic:
         self.basket_x, self.basket_y, self.basket_d = data.x, data.y, data.d
 
     def line_callback(self, data):
-        self.line_x, self.line_y = data.x, data.y
+        self.line_x1, self.line_y1, self.line_x2, self.line_y2 = data.x1, data.y1, data.x2, data.y2
 
     def referee_callback(self, data):
         command_string = data.command
@@ -154,6 +154,13 @@ class Logic:
     def pub_state_string(self):
         self.state_string.data = str(self.counter) + " : " + str(self.current_state)
         self.state_pub.publish(self.state_string)
+
+    def above_line(self, ball, line):
+        if (self.line_x1 == -320 and self.line_y1 == 480) or (self.line_x2 == -320 and self.line_y2 == 480):
+            return False
+        else:
+            self.line
+            return ((line[2] - line[0]) * (ball[1] - line[1]) - (line[3] - line[1]) * (ball[0] - line[0])) > 0
 
     """
      ___Actions to perform at each state___

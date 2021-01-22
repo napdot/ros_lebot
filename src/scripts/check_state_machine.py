@@ -50,7 +50,7 @@ class Logic:
 
         self.ball_x, self.ball_y, self.ball_d = 0, 0, 0
         self.basket_x, self.basket_y, self.basket_d = 0, 0, 0
-        self.line_x, self.line_y = 0, 0
+        self.line_x1, self.line_y1, self.line_x2, self.line_y2 = 0, 0, 0, 0
 
         self.current_state = None
 
@@ -201,7 +201,7 @@ class Logic:
         self.basket_x, self.basket_y, self.basket_d = data.x, data.y, data.d
 
     def line_callback(self, data):
-        self.line_x, self.line_y = data.x, data.y
+        self.line_x1, self.line_y1, self.line_x2, self.line_y2 = data.x1, data.y1, data.x2, data.y2
 
     def referee_callback(self, data):
         command_string = data.command
@@ -215,6 +215,12 @@ class Logic:
     def pub_state_string(self):
         self.state_string.data = str(self.counter) + " : " + str(self.current_state)
         self.state_pub.publish(self.state_string)
+
+    def above_line(self):
+        if (self.line_x1 == -320 and self.line_y1 == 480) or (self.line_x2 == -320 and self.line_y2 == 480):
+            return False
+        else:
+            return ((self.line_x2 - self.line_x1) * (self.ball_y - self.line_y1) - (self.line_y2 - self.line_y1) * (self.ball_x - self.line_x1)) > 0
 
     """
      ___Actions to perform at each state___
@@ -234,7 +240,7 @@ class Logic:
                 self.move.publish(self.msg)
                 return False    # Continue rotation
             else:  # Ball in sight.
-                if self.line_y > self.ball_y:   # Ball inside
+                if not self.above_line():   # Ball inside
                     angle = calc_angle_cam(self.ball_x)
                     if abs(angle) > self.orientation_offset_find:
                         moveValues = orient(self.ball_x)
@@ -245,9 +251,9 @@ class Logic:
                     return True  # Proceed to get_to_ball
 
                 else:   # Ball outside
-                    if self.line_x > 0:
+                    if self.line_x1 > 0:
                         self.rot = -1
-                    elif self.line_x < 0:
+                    elif self.line_x1 < 0:
                         self.rot = 1
                     moveValues = fball(self.rot)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -422,7 +428,7 @@ class Logic:
                         self.move.publish(self.msg)
                         return False  # Continue rotation
                     else:  # Ball in sight.
-                        if self.line_y > self.ball_y:  # Ball inside
+                        if not self.above_line():  # Ball inside
                             angle = calc_angle_cam(self.ball_x)
                             if abs(angle) > self.orientation_offset_find:
                                 moveValues = orient(self.ball_x * 0.5)
@@ -432,9 +438,9 @@ class Logic:
                             return True  # Proceed to get_to_ball
 
                         else:  # Ball outside
-                            if self.line_x > 0:
+                            if self.line_x1 > 0:
                                 self.rot = 1
-                            elif self.line_x < 0:
+                            elif self.line_x1 < 0:
                                 self.rot = -1
                             moveValues = fball(self.rot * 0.5)
                             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -502,7 +508,7 @@ class Logic:
                             self.move.publish(self.msg)
                             return False  # Continue rotation
                         else:  # Ball in sight.
-                            if self.line_y > self.ball_y:  # Ball inside
+                            if not self.above_line():  # Ball inside
                                 angle = calc_angle_cam(self.ball_x)
                                 if abs(angle) > self.orientation_offset_find:
                                     moveValues = orient(self.ball_x * 0.5)
@@ -513,9 +519,9 @@ class Logic:
                                 return True  # Proceed to get_to_ball
 
                             else:  # Ball outside
-                                if self.line_x > 0:
+                                if self.line_x1 > 0:
                                     self.rot = 1
-                                elif self.line_x < 0:
+                                elif self.line_x1 < 0:
                                     self.rot = -1
                                 moveValues = fball(self.rot * 0.5)
                                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(

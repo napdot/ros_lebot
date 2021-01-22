@@ -86,7 +86,7 @@ class Line:
         return
 
     def update_line_message(self):
-        self.line_message.x, self.line_message.y = self.transform_location(self.line_location)
+        self.line_message.x1, self.line_message.y1, self.line_message.x2, self.line_message.y2 = self.transform_location(self.line_location)
         return
 
     def get_line_location(self):
@@ -138,9 +138,11 @@ class Line:
             self.line_location = [0, 0, 0, 0]
 
     def transform_location(self, loc):
-        tx = int(np.interp((loc[0]), [0, 640], [-320, 320]))
-        ty = int(480 - loc[1])
-        return tx, ty
+        tx1 = int(np.interp((loc[0]), [0, 640], [-320, 320]))
+        ty1 = int(480 - loc[1])
+        tx2 = int(np.interp((loc[2]), [0, 640], [-320, 320]))
+        ty2 = int(480 - loc[3])
+        return tx1, ty1, tx2, ty2
 
 
 if __name__ == '__main__':  # Need to have color get_param in loop for updating from signal.
