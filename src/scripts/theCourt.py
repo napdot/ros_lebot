@@ -34,7 +34,7 @@ def intersection(L1, L2):
 class Line:
     def __init__(self):
         self.line_location = [0, 0, 0, 0]
-        self.line_parameters = {"min": [32], "max": [81]}
+        self.line_parameters = {"min": [32], "max": [51]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)
@@ -56,7 +56,7 @@ class Line:
         # self.mid_line = line([320, 0], [320, 480])
 
     def gen_mask(self):
-        mask = np.zeros((480, 640), np.uint16)
+        mask = np.zeros((480, 640), np.uint8)
         mask[160:320] = 1
         return mask
 
@@ -81,7 +81,7 @@ class Line:
         kernel = np.ones((3, 3), np.uint8)
         thresh = cv2.inRange(self.hsv, tuple(self.line_parameters['min']), tuple(self.line_parameters['max']))
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        thresh = cv2.dilate(thresh, kernel, iterations=1)
+        # thresh = cv2.dilate(thresh, kernel, iterations=1)
         self.thresh = np.multiply(thresh, self.mask)
         return
 
@@ -90,13 +90,13 @@ class Line:
         return
 
     def get_line_location(self):
-        minLineLength = 70
+        minLineLength = 50
         max_length = 0
         maxLineGap = 100
         f_point = [[0, 0], [0, 0]]
         try:
-            edges = cv2.Canny(self.thresh, 50, 150, apertureSize=3)
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength, maxLineGap)
+            edges = cv2.Canny(self.thresh, 100, 150, apertureSize=3)
+            lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, 50, minLineLength, maxLineGap)
 
             lengths = []
             max_index = -1
@@ -108,11 +108,14 @@ class Line:
                 length_of_line = np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
                 lengths.append(length_of_line)
 
-                # If for some reason, it detect edge of mask as line
+                """
+                If for some reason, it detect edge of mask as line.
+                Attempts show that it is unnecessary
                 if (p0[1] < 165) and (p1[1] < 165):
                     continue
                 if (p0[1] > 315) and (p1[1] > 315):
                     continue
+                """
 
                 if length_of_line > max_length:
                     max_length = length_of_line
