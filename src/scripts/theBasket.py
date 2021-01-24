@@ -34,6 +34,15 @@ class Basket:
         self.depth_bridge = CvBridge()
         self.color_bridge = CvBridge()
 
+        self.thrower_mask = self.gen_thrower_mask()
+
+    def gen_thrower_mask(self):
+        t_mask = np.ones((480, 640), np.uint8)
+        t_mask[336:,192:448] = 0
+        t_mask[336:,:50] = 0
+        t_mask[336:, 580:] = 0
+        return t_mask
+
     def color_callback(self, data):
         self.color = data.data
         rospy.logwarn(str(self.color))
@@ -69,6 +78,7 @@ class Basket:
         elif self.color == 'blue':
             thresh = cv2.inRange(self.hsv, tuple(self.blue_parameters['min']), tuple(self.blue_parameters['max']))
 
+        thresh = np.multiply(thresh, self.thrower_mask)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         self.thresh = cv2.dilate(thresh, kernel, iterations=1)
         return

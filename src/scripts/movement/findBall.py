@@ -10,7 +10,7 @@ When the camera finds the ball, the robot can start approaching to it.
 """
 
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
-speedCut = 0.3 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
+speedCut = 0.06 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
 def findBall(rot):
     """

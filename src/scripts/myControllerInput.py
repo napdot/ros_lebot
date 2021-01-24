@@ -37,9 +37,9 @@ class Cont:
         self.message = Wheel()
         self.thrower_pub = rospy.Publisher('/thrower_values', Thrower, queue_size=1)
         self.thrower_message = Thrower()
-        self.thrower_speed = 1000
-        self.thrower_min = 1000
-        self.thrower_max = 2000
+        self.thrower_speed = 10
+        self.thrower_min = 0
+        self.thrower_max = 1000 # It's actually 100 but the increase is too fast thagt it is roundint / 10
         self.maxSpeedEnc = 100
         self.was_throwing = False
 
@@ -50,7 +50,7 @@ class Cont:
         self.message.w1 = 0
         self.message.w2 = 0
         self.message.w3 = 0
-        self.thrower_message.t1 = 1000
+        self.thrower_message.t1 = 0
 
         if report.button_square:
             self.thrower_speed = self.thrower_speed + 1
@@ -66,25 +66,25 @@ class Cont:
             self.message.w1 = -self.default_speed
             self.message.w2 = self.default_speed
             self.message.w3 = 0
-            self.controller_pub.publish(self.message)
+            # self.controller_pub.publish(self.message)
 
         elif report.dpad_down:
             self.message.w1 = self.default_speed
             self.message.w2 = -self.default_speed
             self.message.w3 = 0
-            self.controller_pub.publish(self.message)
+            # self.controller_pub.publish(self.message)
 
         elif report.dpad_left:
             self.message.w1 = -self.default_speed
             self.message.w2 = -self.default_speed
             self.message.w3 = -self.default_speed
-            self.controller_pub.publish(self.message)
+            # self.controller_pub.publish(self.message)
 
         elif report.dpad_right:
             self.message.w1 = self.default_speed
             self.message.w2 = self.default_speed
             self.message.w3 = self.default_speed
-            self.controller_pub.publish(self.message)
+            # self.controller_pub.publish(self.message)
 
         elif report.left_analog_x or report.left_analog_y:
             x, y = interp_input(report.left_analog_x, report.left_analog_y)
@@ -93,7 +93,14 @@ class Cont:
                 moveValues = ots(new_y, new_x)
                 w1, w2, w3 = moveValues
                 self.message.w1, self.message.w2, self.message.w3 = int(-w1), int(-w2), int(-w3)
-                self.controller_pub.publish(self.message)
+                # self.controller_pub.publish(self.message)
+
+        else:
+            self.message.w1 = 0
+            self.message.w2 = 0
+            self.message.w3 = 0
+
+        self.controller_pub.publish(self.message)
 
         if report.button_options:
             start_msg = String()
@@ -106,14 +113,14 @@ class Cont:
             self.game_logic_pub.publish(stop_msg)
 
         if report.button_cross:
-            self.thrower_message.t1 = self.thrower_speed
+            self.thrower_message.t1 = int(self.thrower_speed/10)
             self.thrower_pub.publish(self.thrower_message)
-            self.was_throwing = True
+            # self.was_throwing = True
 
-        elif (not report.button_cross) and self.was_throwing:
-            self.thrower_message.t1 = 1000
+        else:
+            self.thrower_message.t1 = 0
             self.thrower_pub.publish(self.thrower_message)
-            self.was_throwing = False
+            # self.was_throwing = False
 
 
 if __name__ == '__main__':

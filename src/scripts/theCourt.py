@@ -137,7 +137,7 @@ class Line:
                 self.line_location = [0, 0, 0, 0]
 
         except:
-            rospy.logwarn("No line")
+            # rospy.logwarn("No line")
             self.line_location = [0, 0, 0, 0]
 
     def transform_location(self, loc):

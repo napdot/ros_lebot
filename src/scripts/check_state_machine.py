@@ -72,8 +72,8 @@ class Logic:
 
         self.orientation_offset_mov = 12 * np.pi / 180
         self.orientation_offset_find = 10 * np.pi / 180
-        self.orientation_offset_rot = 10 * np.pi / 180
-        self.orientation_offset_throw = 6 * np.pi / 180
+        self.orientation_offset_rot = 14 * np.pi / 180
+        self.orientation_offset_throw = 5 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 1.5   # in seconds
@@ -90,10 +90,16 @@ class Logic:
         self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
         self.move.publish(self.msg)
 
+    def stop_thrower(self):
+        self.throwing_counter = 0
+        self.thrower_msg.t1 = int(0)
+        self.throw.publish(self.thrower_msg)
+
     def execute_state(self, state):
         self.pub_state_string()
 
         if self.counter >= (self.rate * 4) and state != "Pause":
+            self.stop_wheel()
             self.last_state = self.current_state
             self.current_state = 'Standby'
             self.counter = 0
@@ -102,6 +108,8 @@ class Logic:
                 self.current_state = 'Stuck'
 
         if state == 'Pause':
+            self.stop_wheel()
+            
             self.counter = 0
             return
 
@@ -130,6 +138,7 @@ class Logic:
             if next:
                 self.current_state = 'FindBall'
                 self.counter = 0
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -138,8 +147,9 @@ class Logic:
             next = self.find_ball_action()
             if next:
                 self.current_state = 'GetToBall'
+                #self.current_state = 'Pause' 
                 self.counter = 0
-                # self.stop_wheel()
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -148,8 +158,9 @@ class Logic:
             next = self.get_to_ball_action()
             if next:
                 self.current_state = 'ImAtBall'
+                # self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -158,8 +169,9 @@ class Logic:
             next = self.im_at_ball_action()
             if next:
                 self.current_state = 'Go'
+                # self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -176,9 +188,10 @@ class Logic:
         elif state == 'Go':  # Move and set thrower speed until ball out of range.
             next = self.go_action()
             if next:
-                self.current_state = 'Pause'
+                self.current_state = 'Throw'
+                # self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -186,9 +199,10 @@ class Logic:
         elif state == 'Throw':
             next = self.throw_action()
             if next:
+                # self.current_state = 'Standby'
                 self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -250,6 +264,7 @@ class Logic:
                 return False    # Continue rotation
             else:  # Ball in sight.
                 if not self.above_line():   # Ball inside
+                    rospy.logwarn('Ball inside')
                     angle = calc_angle_cam(self.ball_x)
                     if abs(angle) > self.orientation_offset_find:
                         moveValues = orient(self.ball_x)
@@ -322,12 +337,12 @@ class Logic:
             rospy.logwarn('DEBUG: Ball lost')
             return False
 
-        ball_angle = calc_angle_cam(self.ball_x)
+        # ball_angle = calc_angle_cam(self.ball_x)
 
-        if abs(ball_angle) > self.orientation_offset_rot:
-            self.current_state = 'FindBall'
-            self.counter = 0
-            return False  # Continue rotating until oriented to ball
+        # if abs(ball_angle) > self.orientation_offset_rot:
+        #    self.current_state = 'FindBall'
+        #    self.counter = 0
+        #    return False  # Continue rotating until oriented to ball
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
             moveValues = fbasket(1)
@@ -405,14 +420,14 @@ class Logic:
             self.current_state = 'Go'
             self.counter = 0
             self.throwing_counter = 0
-            self.thrower_msg.t1 = int(1000)
+            self.thrower_msg.t1 = int(0)
             self.throw.publish(self.thrower_msg)
             rospy.logwarn('DEBUG: Basket lost')
             return False
 
         elif self.throwing_counter >= self.rate * self.throw_duration:   # Termination of throwing
             self.throwing_counter = 0
-            self.thrower_msg.t1 = int(1000)
+            self.thrower_msg.t1 = int(0)
             self.throw.publish(self.thrower_msg)
             return True # Go find a new ball
 
@@ -421,7 +436,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -45, 45, 0     # Constant approach should result in constant throwing results.
+            moveValues = -5, 5, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing

@@ -39,6 +39,10 @@ cv2.createTrackbar("s_max", "mask", filters["max"][1], 255, partial(update_range
 cv2.createTrackbar("v_max", "mask", filters["max"][2], 255, partial(update_range, "max", 2))
 
 cap = cv2.VideoCapture(4)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+cv2.namedWindow("bgr", flags=cv2.WINDOW_GUI_EXPANDED)
 
 while cap.isOpened():
     _, bgr = cap.read()
