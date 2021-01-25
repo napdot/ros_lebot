@@ -12,7 +12,7 @@ from movement.orientObject import orient
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from movement.findBasket import findBasket as fbasket
-from movement.findBasket2 import findBasket as fbasket2
+from movement.fb2.py import findBasketSlow as fbasket2
 from movement.approachThrow import approachThrow
 from movement.throwerCalculation import thrower_calculation
 from movement.alignThrow import align_throw
@@ -74,6 +74,7 @@ class Logic:
         self.orientation_offset_find = 6 * np.pi / 180
         self.orientation_offset_rot = 15 * np.pi / 180
         self.orientation_offset_throw = 3 * np.pi / 180
+        self.orientation_offset_pre_throw = 15 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 1.5   # in seconds
@@ -355,8 +356,21 @@ class Logic:
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Continue until basket is found
+
+        basket_angle = calc_angle_cam(self.basket_x)
+
+        elif abs(basket_angle) > self.orientation_offset_pre_throw:
+            if self.basket_x > 0:
+                self.rot = 1
+            else:
+                self.rot = -1
+            moveValues = fbasket(self.rot) # 1 or -1 according to rotation$
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), in$
+            self.move.publish(self.msg)
+            return False    # Continue rotating until oriented to basket
         else:   # Basket found
             return True
+
 
     def go_action(self):
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
@@ -379,7 +393,7 @@ class Logic:
                     self.rot = 1
                 else:
                     self.rot = -1
-                moveValues = fbasket(self.rot) # 1 or -1 according to rotation directions
+                moveValues = fbasket2(self.rot) # 1 or -1 according to rotation directions
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
