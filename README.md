@@ -80,13 +80,10 @@ rostopic pub /color_ref std_msgs/String "{'data':'red'}"
 #### Needs rework
 
 - In logic node, go_action.
+  - Alignment sometimes off
 
 #### Missing
-
-- Check if websocket from referee is working properly.
-  - Change ref2.html websocket address to correct one.
 - Localization or court limits.
-  - A bit too advance :(
-
+  - Need to test
 
 
