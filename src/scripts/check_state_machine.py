@@ -400,7 +400,7 @@ class Logic:
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
             if abs(ball_angle) > self.orientation_offset_throw_ball:
-                if self.ball > 0:
+                if self.ball_x > 0:
                     self.rot = 1
                 else:
                     self.rot = -1
@@ -467,7 +467,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -5, 5, 0     # Constant approach should result in constant throwing results.
+            moveValues = -6, 5, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
