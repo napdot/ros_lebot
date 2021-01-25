@@ -27,9 +27,9 @@ def findBasketSlow(rot):
     """
     rotation = rot
     if rotation > 0:
-        m = np.dot(aKI, np.array([[0], [0.9], [rotation]]))
-    else:
-        m = np.dot(aKI, np.array([[0], [-0.9], [rotation]]))
+        m = np.dot(aKI, np.array([[0], [0.95], [rotation]]))
+    else:	# Should be 0, -x, rot
+        m = np.dot(aKI, np.array([[0], [0.95], [rotation]]))
             
     mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     return mSer

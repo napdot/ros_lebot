@@ -75,7 +75,7 @@ class Logic:
         self.orientation_offset_rot = 90 * np.pi / 180
         self.orientation_offset_throw = 4 * np.pi / 180
         self.orientation_offset_pre_throw = 15 * np.pi / 180
-        self.orientation_offset_throw_ball = 8 * np.pi / 180
+        self.orientation_offset_throw_ball = 7 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 2.4   # in seconds
@@ -467,7 +467,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -6, 5, 0     # Constant approach should result in constant throwing results.
+            moveValues = -6, 6, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
