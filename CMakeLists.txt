@@ -185,6 +185,7 @@ catkin_install_python(PROGRAMS
     src/scripts/movement/approachThrow.py
     src/scripts/movement/findBall.py
     src/scripts/movement/findBasket.py
+    src/scripts/movement/fb2.py
     src/scripts/movement/orientObject.py
     src/scripts/movement/throwerCalculation.py
     src/scripts/ref2.html

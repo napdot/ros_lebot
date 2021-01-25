@@ -34,7 +34,7 @@ class Move:
         if self.ser_type:
             tot = ("d:{0}\n".format(t1))
         else:
-            tot = ("t<{0}\n>".format(t1))
+            tot = ("t<{0}>\n>".format(t1))
         self.ser.write(tot.encode('utf-8'))
         rospy.loginfo(tot)
 

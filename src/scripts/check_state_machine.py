@@ -12,7 +12,7 @@ from movement.orientObject import orient
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from movement.findBasket import findBasket as fbasket
-from movement.fb2.py import findBasketSlow as fbasket2
+from movement.fb2 import findBasketSlow as fbasket2
 from movement.approachThrow import approachThrow
 from movement.throwerCalculation import thrower_calculation
 from movement.alignThrow import align_throw
@@ -71,13 +71,14 @@ class Logic:
         """
 
         self.orientation_offset_mov = 10 * np.pi / 180
-        self.orientation_offset_find = 6 * np.pi / 180
-        self.orientation_offset_rot = 15 * np.pi / 180
-        self.orientation_offset_throw = 3 * np.pi / 180
+        self.orientation_offset_find = 7 * np.pi / 180
+        self.orientation_offset_rot = 90 * np.pi / 180
+        self.orientation_offset_throw = 4 * np.pi / 180
         self.orientation_offset_pre_throw = 15 * np.pi / 180
+        self.orientation_offset_throw_ball = 8 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
-        self.throw_duration = 1.5   # in seconds
+        self.throw_duration = 2.4   # in seconds
 
         self.rot = 1
 
@@ -152,7 +153,7 @@ class Logic:
                 self.current_state = 'GetToBall'
                 # self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -164,7 +165,7 @@ class Logic:
                 self.current_state = 'ImAtBall'
                 # self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -176,7 +177,7 @@ class Logic:
                 self.current_state = 'Go'
                 # self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -194,8 +195,8 @@ class Logic:
             self.stop_thrower()
             next = self.go_action()
             if next:
-                # self.current_state = 'Throw'
-                self.current_state = 'Pause'
+                self.current_state = 'Throw'
+                # self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -205,8 +206,8 @@ class Logic:
         elif state == 'Throw':
             next = self.throw_action()
             if next:
-                self.current_state = 'Standby'
-                #self.current_state = 'Pause'
+                #self.current_state = 'Standby'
+                self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 self.stop_thrower()
@@ -359,13 +360,13 @@ class Logic:
 
         basket_angle = calc_angle_cam(self.basket_x)
 
-        elif abs(basket_angle) > self.orientation_offset_pre_throw:
+        if abs(basket_angle) > self.orientation_offset_pre_throw:
             if self.basket_x > 0:
                 self.rot = 1
             else:
                 self.rot = -1
             moveValues = fbasket(self.rot) # 1 or -1 according to rotation$
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), in$
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Continue rotating until oriented to basket
         else:   # Basket found
@@ -387,6 +388,7 @@ class Logic:
 
         else:
             basket_angle = calc_angle_cam(self.basket_x)
+            ball_angle = calc_angle_cam(self.ball_x)
 
             if abs(basket_angle) > self.orientation_offset_throw:   # Orientation to basket is off
                 if self.basket_x > 0:
@@ -397,7 +399,15 @@ class Logic:
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
-
+            if abs(ball_angle) > self.orientation_offset_throw_ball:
+                if self.ball > 0:
+                    self.rot = 1
+                else:
+                    self.rot = -1
+                moveValues = fbasket2(self.rot) # 1 or -1 according to rotation directions
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False    # Continue rotating until oriented to basket
             else:
                 return True
 
@@ -437,7 +447,8 @@ class Logic:
 
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
-            self.current_state = 'FindBall'
+            # self.current_state = 'FindBall'
+            self.current_state = 'Pause'
             self.counter = 0
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(0)
@@ -456,7 +467,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -7, 7, 0     # Constant approach should result in constant throwing results.
+            moveValues = -5, 5, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
