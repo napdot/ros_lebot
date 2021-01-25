@@ -46,9 +46,9 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cv2.namedWindow("bgr")
 
 t_mask = np.ones((480, 640), np.uint8)
-t_mask[325:,192:480] = 0
-t_mask[330:,:50] = 0
-t_mask[330:, 580:] = 0
+t_mask[330:,18:448] = 0
+t_mask[336:,:50] = 0
+t_mask[336:, 580:] = 0
 
 while cap.isOpened():
     _, bgr = cap.read()

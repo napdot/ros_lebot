@@ -37,10 +37,8 @@ class Basket:
         self.thrower_mask = self.gen_thrower_mask()
 
     def gen_thrower_mask(self):
-        t_mask = np.ones((480, 640), np.uint8)
-        t_mask[336:,192:448] = 0
-        t_mask[336:,:50] = 0
-        t_mask[336:, 580:] = 0
+        t_mask = np.zeros((480, 640), np.uint8)
+        t_mask[:240,:] = 1
         return t_mask
 
     def color_callback(self, data):
@@ -72,7 +70,7 @@ class Basket:
         return
 
     def get_thresh(self):
-        kernel = np.ones((3, 3), np.uint8)
+        kernel = np.ones((5, 5), np.uint8)
         if self.color == 'red':
             thresh = cv2.inRange(self.hsv, tuple(self.red_parameters['min']), tuple(self.red_parameters['max']))
         elif self.color == 'blue':
@@ -106,7 +104,7 @@ class Basket:
         return
 
     def get_basket_location(self):
-        min_basket_area = 900
+        min_basket_area = 350
         try:
             cnt = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             areas = []

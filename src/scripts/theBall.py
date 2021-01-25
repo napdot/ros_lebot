@@ -34,9 +34,9 @@ class Ball:
 
     def gen_thrower_mask(self):
         t_mask = np.ones((480, 640), np.uint8)
-        t_mask[336:,192:448] = 0
-        t_mask[336:,:50] = 0
-        t_mask[336:, 580:] = 0
+        t_mask[325:,192:480] = 0
+        t_mask[330:,:50] = 0
+        t_mask[330:, 580:] = 0
         return t_mask
 
     def get_my_image_callback(self, data):
@@ -97,7 +97,7 @@ class Ball:
         return
 
     def get_ball_location(self):
-        area_min = 17
+        area_min = 14
         self.ball_location = [0, 0]
         try:
             cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]

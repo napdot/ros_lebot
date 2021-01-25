@@ -12,6 +12,7 @@ from movement.orientObject import orient
 from movement.findBall import findBall as fball
 from movement.approachBall import approachBall
 from movement.findBasket import findBasket as fbasket
+from movement.findBasket2 import findBasket as fbasket2
 from movement.approachThrow import approachThrow
 from movement.throwerCalculation import thrower_calculation
 from movement.alignThrow import align_throw
@@ -62,7 +63,6 @@ class Logic:
         Orientation offsets must follow these conditions:
         find < rot < mov
         throw is independent but ideally < find
-        
         Small find makes it harder to start moving to balls, especially if they are far.
         Small mov, makes it run much slower due to more need to correct orientation to balls.
         Small rot, makes it so that we correct our orientation to more frequently while finding baskets. However, we
@@ -70,10 +70,10 @@ class Logic:
         Small throw would be the most ideal. Tradeoff would only be speed.
         """
 
-        self.orientation_offset_mov = 12 * np.pi / 180
-        self.orientation_offset_find = 10 * np.pi / 180
-        self.orientation_offset_rot = 14 * np.pi / 180
-        self.orientation_offset_throw = 5 * np.pi / 180
+        self.orientation_offset_mov = 10 * np.pi / 180
+        self.orientation_offset_find = 6 * np.pi / 180
+        self.orientation_offset_rot = 15 * np.pi / 180
+        self.orientation_offset_throw = 3 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 1.5   # in seconds
@@ -84,7 +84,7 @@ class Logic:
         self.can_get_stuck = stuck_activated
         self.stuck_counter = 0
         self.stuck_max = node_rate * 10
-   
+
     def stop_wheel(self):
         moveValues = [0, 0, 0]
         self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -100,6 +100,7 @@ class Logic:
 
         if self.counter >= (self.rate * 4) and state != "Pause":
             self.stop_wheel()
+            self.stop_thrower()
             self.last_state = self.current_state
             self.current_state = 'Standby'
             self.counter = 0
@@ -109,7 +110,7 @@ class Logic:
 
         if state == 'Pause':
             self.stop_wheel()
-            
+            self.stop_thrower()
             self.counter = 0
             return
 
@@ -135,6 +136,7 @@ class Logic:
 
         if state == 'Standby':  # Changes to findBall state.
             next = self.standby_action()
+            self.stop_thrower()
             if next:
                 self.current_state = 'FindBall'
                 self.counter = 0
@@ -147,7 +149,7 @@ class Logic:
             next = self.find_ball_action()
             if next:
                 self.current_state = 'GetToBall'
-                #self.current_state = 'Pause' 
+                # self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -156,6 +158,7 @@ class Logic:
 
         elif state == 'GetToBall':  # Move towards ball until a certain distance
             next = self.get_to_ball_action()
+            self.stop_thrower()
             if next:
                 self.current_state = 'ImAtBall'
                 # self.current_state = 'Pause'
@@ -166,6 +169,7 @@ class Logic:
             return
 
         elif state == 'ImAtBall':  # Rotate around ball until basket is found
+            self.stop_thrower()
             next = self.im_at_ball_action()
             if next:
                 self.current_state = 'Go'
@@ -186,10 +190,11 @@ class Logic:
             return
 
         elif state == 'Go':  # Move and set thrower speed until ball out of range.
+            self.stop_thrower()
             next = self.go_action()
             if next:
-                self.current_state = 'Throw'
-                # self.current_state = 'Pause'
+                # self.current_state = 'Throw'
+                self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 return
@@ -199,10 +204,11 @@ class Logic:
         elif state == 'Throw':
             next = self.throw_action()
             if next:
-                # self.current_state = 'Standby'
-                self.current_state = 'Pause'
+                self.current_state = 'Standby'
+                #self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
+                self.stop_thrower()
                 return
             self.counter = self.counter + 1
             return
@@ -337,12 +343,12 @@ class Logic:
             rospy.logwarn('DEBUG: Ball lost')
             return False
 
-        # ball_angle = calc_angle_cam(self.ball_x)
+        ball_angle = calc_angle_cam(self.ball_x)
 
-        # if abs(ball_angle) > self.orientation_offset_rot:
-        #    self.current_state = 'FindBall'
-        #    self.counter = 0
-        #    return False  # Continue rotating until oriented to ball
+        if abs(ball_angle) > self.orientation_offset_rot:
+            self.current_state = 'FindBall'
+            self.counter = 0
+            return False  # Continue rotating until oriented to ball
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
             moveValues = fbasket(1)
@@ -417,7 +423,7 @@ class Logic:
 
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
-            self.current_state = 'Go'
+            self.current_state = 'FindBall'
             self.counter = 0
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(0)
@@ -436,7 +442,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -5, 5, 0     # Constant approach should result in constant throwing results.
+            moveValues = -7, 7, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
