@@ -101,13 +101,13 @@ class Logic:
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= (self.rate * 4) and state != "Pause":
+        if self.counter >= (self.rate * 8) and state != "Pause":
             self.stop_wheel()
             self.stop_thrower()
             self.last_state = self.current_state
             self.current_state = 'Standby'
             self.counter = 0
-            if self.can_get_stuck and state != "ImAtBall":
+            if self.can_get_stuck:
                 self.stuck_at_state = True
                 self.current_state = 'Stuck'
                 return
