@@ -337,6 +337,7 @@ class Logic:
             yP, xP = tcc(self.ball_d, angle)
             if self.ball_d > self.min_ball_dist:  # Not yet near ball
                 moveValues = approachBall(xP, yP)
+                moveValues = moveValues * self.ball_d / 3000
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue until near
