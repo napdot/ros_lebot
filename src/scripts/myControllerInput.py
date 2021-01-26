@@ -14,13 +14,13 @@ from movement.approachBall import approachBall as ots
 def dz_radial(x_inp, y_inp, deadzone):
     input_magnitude = np.linalg.norm([x_inp, y_inp])
     if input_magnitude < deadzone:
-        return 0, 0
+        return 0, 0, 0
     else:
-        return x_inp, y_inp
+        return x_inp, y_inp, input_magnitude
 
 def interp_input(x_inp, y_inp):
-    x_norm = np.interp(x_inp, [0, 255], [-320, 320])
-    y_norm = np.interp(y_inp, [0, 255], [-480, 480])
+    x_norm = np.interp(x_inp, [0, 255], [-100, 100])
+    y_norm = np.interp(y_inp, [0, 255], [-100, 100])
     return x_norm, y_norm
 
 
@@ -87,18 +87,18 @@ class Cont:
             # self.controller_pub.publish(self.message)
 
         elif report.left_analog_x or report.left_analog_y:
-            x, y = interp_input(report.left_analog_x, report.left_analog_y)
-            new_x, new_y = dz_radial(x, y, 70)
+            y, x = interp_input(report.left_analog_y, report.left_analog_x)
+            new_x, new_y, magnitude = dz_radial(x, y, 30)
             if new_x != 0 or new_y != 0:
                 moveValues = ots(new_y, new_x)
-                w1, w2, w3 = moveValues
+                w1, w2, w3 = magnitude/200 * moveValues
                 self.message.w1, self.message.w2, self.message.w3 = int(-w1), int(-w2), int(-w3)
                 # self.controller_pub.publish(self.message)
 
-        else:
-            self.message.w1 = 0
-            self.message.w2 = 0
-            self.message.w3 = 0
+        # else:
+        #     self.message.w1 = 0
+        #     self.message.w2 = 0
+        #     self.message.w3 = 0
 
         self.controller_pub.publish(self.message)
 
