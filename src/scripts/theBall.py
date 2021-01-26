@@ -49,6 +49,7 @@ class Ball:
             color_image = np.zeros((480, 640, 3), np.uint16)
 
         self.hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
+        self.hsv = cv2.GaussianBlur(self.hsv,(5,5),0)
         self.get_thresh()
         return
 

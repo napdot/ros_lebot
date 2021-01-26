@@ -34,7 +34,7 @@ def intersection(L1, L2):
 class Line:
     def __init__(self):
         self.line_location = [0, 0, 0, 0]
-        self.line_parameters = {"min": [1], "max": [47]}
+        self.line_parameters = {"min": [1], "max": [44]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)

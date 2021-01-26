@@ -285,6 +285,7 @@ class Logic:
                     return True  # Proceed to get_to_ball
 
                 else:   # Ball outside
+                    rospy.logwarn('Ball outside')
                     # self.rot = self.rotation_orientation_with_line()  # Eventual logic
                     moveValues = fball(self.rot)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
@@ -319,6 +320,8 @@ class Logic:
                 self.counter = 0
                 rospy.logwarn('DEBUG: Ball Outside court')
                 return
+            else:
+                 rospy.logwarn('DEBUG: Ball Inside court')
         
         angle = calc_angle_cam(self.ball_x)
         if abs(angle) > self.orientation_offset_mov:
