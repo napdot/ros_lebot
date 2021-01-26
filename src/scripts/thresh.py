@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 
 try:
-    with open("colors.json", "r") as f:
+    with open("color_parameters.json", "r") as f:
         saved_colors = json.loads(f.read())
 except FileNotFoundError:
     saved_colors = {}
@@ -39,7 +39,7 @@ cv2.createTrackbar("h_max", "mask", filters["max"][0], 179, partial(update_range
 cv2.createTrackbar("s_max", "mask", filters["max"][1], 255, partial(update_range, "max", 1))
 cv2.createTrackbar("v_max", "mask", filters["max"][2], 255, partial(update_range, "max", 2))
 
-cap = cv2.VideoCapture(4)
+cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -55,7 +55,7 @@ while cap.isOpened():
     cv2.imshow('bgr', bgr)
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, tuple(filters["min"]), tuple(filters["max"]))
-    mask = np.multiply(mask, t_mask)
+    # mask = np.multiply(mask, t_mask)
     cv2.imshow("mask", mask)
     key = cv2.waitKey(10)
     if key & 0xFF == ord("s"):
