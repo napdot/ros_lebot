@@ -37,6 +37,8 @@ class Ball:
         t_mask[325:,192:480] = 0
         t_mask[330:,:50] = 0
         t_mask[330:, 580:] = 0
+        t_mask[400:,] = 0
+        t_mask[280:,370:450] = 0
         return t_mask
 
     def get_my_image_callback(self, data):
@@ -97,14 +99,16 @@ class Ball:
         return
 
     def get_ball_location(self):
-        area_min = 14
+        area_min = 35
+        area_max = 6100
         self.ball_location = [0, 0]
         try:
             cnts = cv2.findContours(self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
             if len(cnts) != 0:
                 c = max(cnts, key=cv2.contourArea)
                 area = cv2.contourArea(c)
-                if area > area_min:
+                # rospy.logwarn(area)
+                if area_max > area > area_min:
                     ((cX, cY), cR) = cv2.minEnclosingCircle(c)
                 else:
                     cX = 0

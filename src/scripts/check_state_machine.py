@@ -686,7 +686,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=300, node_rate=myRate, line_detection=False, stuck_activated=False)
+    fb = Logic(min_dist=300, node_rate=myRate, line_detection=True, stuck_activated=False)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)

@@ -49,13 +49,15 @@ t_mask = np.ones((480, 640), np.uint8)
 t_mask[325:,192:480] = 0
 t_mask[330:,:50] = 0
 t_mask[330:, 580:] = 0
+t_mask[400:,] = 0
+t_mask[280:,370:450] = 0
 
 while cap.isOpened():
     _, bgr = cap.read()
     cv2.imshow('bgr', bgr)
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, tuple(filters["min"]), tuple(filters["max"]))
-    # mask = np.multiply(mask, t_mask)
+    mask = np.multiply(mask, t_mask)
     cv2.imshow("mask", mask)
     key = cv2.waitKey(10)
     if key & 0xFF == ord("s"):
