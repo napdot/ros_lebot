@@ -34,7 +34,7 @@ def intersection(L1, L2):
 class Line:
     def __init__(self):
         self.line_location = [0, 0, 0, 0]
-        self.line_parameters = {"min": [32], "max": [51]}
+        self.line_parameters = {"min": [1], "max": [47]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)
@@ -58,6 +58,7 @@ class Line:
     def gen_mask(self):
         mask = np.zeros((480, 640), np.uint8)
         mask[160:320] = 1
+        mask[280:,370:450] = 0
         return mask
 
     def get_my_image_callback(self, data):
