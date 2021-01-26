@@ -283,13 +283,7 @@ class Logic:
                     return True  # Proceed to get_to_ball
 
                 else:   # Ball outside
-                    """
-                    if self.line_x1 > 0:
-                        self.rot = -1
-                    elif self.line_x1 < 0:
-                        self.rot = 1
-                    """
-                    self.rot = self.rotation_orientation_with_line()
+                    # self.rot = self.rotation_orientation_with_line()  # Eventual logic
                     moveValues = fball(self.rot)
                     self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                     self.move.publish(self.msg)
@@ -315,8 +309,14 @@ class Logic:
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:    # No ball in sight
             self.current_state = 'FindBall'
             self.counter = 0
-            rospy.logwarn('DEBUG: Ball lost')
             return False
+
+        if self.detect_line:
+            if self.above_line():
+                self.current_state = 'FindBall'
+                self.counter = 0
+                rospy.logwarn('DEBUG: Ball Outside court')
+                return
         
         angle = calc_angle_cam(self.ball_x)
         if abs(angle) > self.orientation_offset_mov:
@@ -342,7 +342,7 @@ class Logic:
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
-            rospy.logwarn('DEBUG: Ball lost')
+            # rospy.logwarn('DEBUG: Ball lost')
             return False
 
         ball_angle = calc_angle_cam(self.ball_x)
@@ -377,13 +377,13 @@ class Logic:
         if (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:  # Ball lost
             self.current_state = 'FindBall'
             self.counter = 0
-            rospy.logwarn('DEBUG: Ball lost')
+            # rospy.logwarn('DEBUG: Ball lost')
             return False
 
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:    # Basket lost
             self.current_state = 'ImAtBall'
             self.counter = 0
-            rospy.logwarn('DEBUG: Basket lost')
+            # rospy.logwarn('DEBUG: Basket lost')
             return False
 
         else:
@@ -453,7 +453,7 @@ class Logic:
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(0)
             self.throw.publish(self.thrower_msg)
-            rospy.logwarn('DEBUG: Basket lost')
+            # rospy.logwarn('DEBUG: Basket lost')
             return False
 
         elif self.throwing_counter >= self.rate * self.throw_duration:   # Termination of throwing
@@ -476,6 +476,26 @@ class Logic:
         pass
 
     def stuck_at_state_action(self):
+        if not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
+            if self.basket_d >
+                moveValues = fball(self.rot * 0.5)
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False  # Continue rotation
+
+        elif not ((self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0):
+            if self.detect_line:
+
+            moveValues = fball(self.rot * 0.5)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False  # Continue rotation
+        else:
+            return True
+
+
+
+    def stuck_at_state_action_unused(self):
         if self.last_state == 'FindBall':
             # First half, same as findBall but slower
             if self.stuck_counter < self.stuck_max / 2:
