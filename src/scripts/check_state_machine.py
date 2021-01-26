@@ -100,7 +100,7 @@ class Logic:
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= (self.rate * 4) and state != "Pause":
+        if self.counter >= (self.rate * 6) and state != "Pause":
             self.stop_wheel()
             self.stop_thrower()
             self.last_state = self.current_state
@@ -109,6 +109,7 @@ class Logic:
             if self.can_get_stuck:
                 self.stuck_at_state = True  # False as hasn't been developed yet
                 self.current_state = 'Stuck'
+                return
 
         if state == 'Pause':
             self.stop_wheel()
@@ -118,11 +119,12 @@ class Logic:
 
         if state == 'Stuck':
             if self.stuck_counter > self.stuck_max:  # Couldn't get unstuck
-                self.current_state = 'Pause'
+                self.current_state = 'Standby'
                 self.stuck_at_state = False
                 self.counter = 0
                 self.stuck_counter = 0
                 self.last_state = 'Standby'
+                rospy.logwarn("Couldn't get unstuck")
                 return
 
             unstuck = self.stuck_at_state_action()
@@ -477,23 +479,24 @@ class Logic:
 
     def stuck_at_state_action(self):
         if not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
-            if self.basket_d >
-                moveValues = fball(self.rot * 0.5)
+            if self.basket_d < 600:
+                moveValues = [8, -8, 0]
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
-                return False  # Continue rotation
+                return False
+            elif self.basket_d > 1400:
+                moveValues = [-8, 8, 0]
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False
 
-        elif not ((self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0):
-            if self.detect_line:
-
+        elif (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
             moveValues = fball(self.rot * 0.5)
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
-            return False  # Continue rotation
+            return False
         else:
             return True
-
-
 
     def stuck_at_state_action_unused(self):
         if self.last_state == 'FindBall':
