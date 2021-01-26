@@ -72,12 +72,12 @@ class Logic:
 
         self.orientation_offset_mov = 10 * np.pi / 180
         self.orientation_offset_find = 7 * np.pi / 180
-        self.orientation_offset_rot = 90 * np.pi / 180
-        self.orientation_offset_throw = 4 * np.pi / 180
+        self.orientation_offset_rot = 20 * np.pi / 180
+        self.orientation_offset_throw = 3.5 * np.pi / 180
         self.orientation_offset_pre_throw = 15 * np.pi / 180
         self.orientation_offset_throw_ball = 7 * np.pi / 180
         self.orientation_offset_stuck = 15 * np.pi / 180
-        self.distance_offset = 40
+        self.distance_offset = 100
         self.rate = node_rate
         self.throw_duration = 2.4   # in seconds
 
@@ -86,7 +86,7 @@ class Logic:
         self.stuck_at_state = False
         self.can_get_stuck = stuck_activated
         self.stuck_counter = 0
-        self.stuck_max = node_rate * 10
+        self.stuck_max = node_rate * 5
 
     def stop_wheel(self):
         moveValues = [0, 0, 0]
@@ -101,8 +101,8 @@ class Logic:
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= (self.rate * 8) and state != "Pause":
-            self.stop_wheel()
+        if self.counter >= (self.rate * 10) and state != "Pause":
+            # self.stop_wheel()
             self.stop_thrower()
             self.last_state = self.current_state
             self.current_state = 'Standby'
@@ -125,7 +125,7 @@ class Logic:
                 self.counter = 0
                 self.stuck_counter = 0
                 self.last_state = 'Standby'
-                rospy.logwarn("Couldn't get unstuck")
+                # rospy.logwarn("Couldn't get unstuck")
                 return
 
             unstuck = self.stuck_at_state_action()
@@ -404,6 +404,11 @@ class Logic:
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue rotating until oriented to basket
+            # if not self.min_ball_dist - self.distance_offset < self.ball_d:
+            #    moveValues = [3, -3, 0]
+            #    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            #    self.move.publish(self.msg)
+            #    return False
             if abs(ball_angle) > self.orientation_offset_throw_ball:
                 if self.ball_x > 0:
                     self.rot = 1
