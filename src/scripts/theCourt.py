@@ -34,7 +34,7 @@ def intersection(L1, L2):
 class Line:
     def __init__(self):
         self.line_location = [0, 0, 0, 0]
-        self.line_parameters = {"min": [1], "max": [44]}
+        self.line_parameters = {"min": [22], "max": [44]}
 
         self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.get_my_image_callback, queue_size=1)
         self.line_location_pub = rospy.Publisher("/line", LineLocation, queue_size=1)
@@ -57,7 +57,7 @@ class Line:
 
     def gen_mask(self):
         mask = np.zeros((480, 640), np.uint8)
-        mask[160:320] = 1
+        mask[110:320] = 1
         mask[280:,370:450] = 0
         return mask
 
@@ -81,7 +81,8 @@ class Line:
     def get_thresh(self):
         kernel = np.ones((3, 3), np.uint8)
         thresh = cv2.inRange(self.hsv, tuple(self.line_parameters['min']), tuple(self.line_parameters['max']))
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        erosion = cv2.erode(thresh, kernel,iterations = 3)
+        # thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         # thresh = cv2.dilate(thresh, kernel, iterations=1)
         self.thresh = np.multiply(thresh, self.mask)
         return

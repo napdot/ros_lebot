@@ -76,6 +76,7 @@ class Logic:
         self.orientation_offset_throw = 4 * np.pi / 180
         self.orientation_offset_pre_throw = 15 * np.pi / 180
         self.orientation_offset_throw_ball = 7 * np.pi / 180
+        self.orientation_offset_stuck = 15 * np.pi / 180
         self.distance_offset = 40
         self.rate = node_rate
         self.throw_duration = 2.4   # in seconds
@@ -100,14 +101,14 @@ class Logic:
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= (self.rate * 6) and state != "Pause":
+        if self.counter >= (self.rate * 4) and state != "Pause":
             self.stop_wheel()
             self.stop_thrower()
             self.last_state = self.current_state
             self.current_state = 'Standby'
             self.counter = 0
-            if self.can_get_stuck:
-                self.stuck_at_state = True  # False as hasn't been developed yet
+            if self.can_get_stuck and state != "ImAtBall":
+                self.stuck_at_state = True
                 self.current_state = 'Stuck'
                 return
 
@@ -131,6 +132,7 @@ class Logic:
             if unstuck:
                 self.stuck_at_state = False
                 self.current_state = 'Standby'
+                self.stuck_counter = 0
                 self.counter = 0
                 self.stuck_counter = 0
                 self.last_state = 'Standby'
@@ -208,8 +210,8 @@ class Logic:
         elif state == 'Throw':
             next = self.throw_action()
             if next:
-                #self.current_state = 'Standby'
-                self.current_state = 'Pause'
+                self.current_state = 'Standby'
+                # self.current_state = 'Pause'
                 self.counter = 0
                 self.stop_wheel()
                 self.stop_thrower()
@@ -274,7 +276,7 @@ class Logic:
                 return False    # Continue rotation
             else:  # Ball in sight.
                 if not self.above_line():   # Ball inside
-                    rospy.logwarn('Ball inside')
+                    # rospy.logwarn('Ball inside')
                     angle = calc_angle_cam(self.ball_x)
                     if abs(angle) > self.orientation_offset_find:
                         moveValues = orient(self.ball_x)
@@ -285,10 +287,10 @@ class Logic:
                     return True  # Proceed to get_to_ball
 
                 else:   # Ball outside
-                    rospy.logwarn('Ball outside')
+                    #rospy.logwarn('Ball outside')
                     # self.rot = self.rotation_orientation_with_line()  # Eventual logic
                     moveValues = fball(self.rot)
-                    self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                    self.msg.w1, self.msg.w2, self.msg.w3 = 2*int(moveValues[0]), 2*int(moveValues[1]), 2*int(moveValues[2])
                     self.move.publish(self.msg)
                     return False  # Continue rotation
 
@@ -318,16 +320,14 @@ class Logic:
             if self.above_line():
                 self.current_state = 'FindBall'
                 self.counter = 0
-                rospy.logwarn('DEBUG: Ball Outside court')
+                # rospy.logwarn('DEBUG: Ball Outside court')
                 return
-            else:
-                 rospy.logwarn('DEBUG: Ball Inside court')
-        
+
         angle = calc_angle_cam(self.ball_x)
         if abs(angle) > self.orientation_offset_mov:
             self.current_state = 'FindBall'
             self.counter = 0
-            rospy.logwarn('DEBUG: Ball Unoriented')
+            # rospy.logwarn('DEBUG: Ball Unoriented')
             return
 
         else:   # Ball in sight
@@ -452,8 +452,8 @@ class Logic:
 
     def throw_action(self):
         if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:  # Basket lost
-            # self.current_state = 'FindBall'
-            self.current_state = 'Pause'
+            self.current_state = 'FindBall'
+            #self.current_state = 'Pause'
             self.counter = 0
             self.throwing_counter = 0
             self.thrower_msg.t1 = int(0)
@@ -481,23 +481,36 @@ class Logic:
         pass
 
     def stuck_at_state_action(self):
+        if (self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0:
+            moveValues = fbasket(1)
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False    # Continue until basket is found
+
+        basket_angle = calc_angle_cam(self.basket_x)
+
+        if abs(basket_angle) > self.orientation_offset_stuck:
+            if self.basket_x > 0:
+                self.rot = 1
+            else:
+                self.rot = -1
+            moveValues = fbasket(self.rot) # 1 or -1 according to rotation$
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False    # Continue rotating until oriented to basket
+
         if not ((self.basket_x == -320 and self.basket_y == 480) or self.basket_d == 0):
-            if self.basket_d < 600:
+            if self.basket_d < 1500:
                 moveValues = [8, -8, 0]
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False
-            elif self.basket_d > 1400:
+            elif self.basket_d > 1500:
                 moveValues = [-8, 8, 0]
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False
 
-        elif (self.ball_x == -320 and self.ball_y == 480) or self.ball_d == 0:
-            moveValues = fball(self.rot * 0.5)
-            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
-            self.move.publish(self.msg)
-            return False
         else:
             return True
 
