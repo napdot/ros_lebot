@@ -38,6 +38,8 @@ class Logic:
         self.basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, self.basket_callback, queue_size=1)
         self.referee_subscriber = rospy.Subscriber('/referee', Ref_Command, self.referee_callback, queue_size=1)
         self.line_subscriber = rospy.Subscriber('/line', LineLocation, self.line_callback, queue_size=1)
+        self.color_pub = rospy.Publisher('/color_ref', String, queue_size=1)
+        self.color_sub = self.color_sub = rospy.Subscriber("/color_ref", String, self.color_callback, queue_size=1)
 
         self.state_string = String()
 
@@ -83,10 +85,21 @@ class Logic:
 
         self.rot = 1
 
+        self.color = None
+        self.initial_color = None
+
         self.stuck_at_state = False
         self.can_get_stuck = stuck_activated
         self.stuck_counter = 0
         self.stuck_max = node_rate * 5
+        self.stuck_times = 0
+
+    def color_callback(self, data):
+        if not self.initial_color:
+            self.initial_color = data.data
+        else:
+            self.color = data.data
+
 
     def stop_wheel(self):
         moveValues = [0, 0, 0]
@@ -101,7 +114,7 @@ class Logic:
     def execute_state(self, state):
         self.pub_state_string()
 
-        if self.counter >= (self.rate * 10) and state != "Pause":
+        if self.counter >= (self.rate * 5) and state != "Pause":
             # self.stop_wheel()
             self.stop_thrower()
             self.last_state = self.current_state
@@ -116,26 +129,40 @@ class Logic:
             self.stop_wheel()
             self.stop_thrower()
             self.counter = 0
+            if self.initial_color:
+                self.color_pub.publish(self.color)
             return
 
         if state == 'Stuck':
+            if 4 > self.stuck_times > 2:
+                if self.initial_color == 'red':
+                    self.color = 'red'
+                    self.color_pub.publish(self.color)
+                else:
+                    self.color = 'blue'
+                    self.color_pub.publish(self.color)
+
             if self.stuck_counter > self.stuck_max:  # Couldn't get unstuck
                 self.current_state = 'Standby'
                 self.stuck_at_state = False
                 self.counter = 0
                 self.stuck_counter = 0
                 self.last_state = 'Standby'
+                self.stuck_times = self.stuck_times + 1
                 # rospy.logwarn("Couldn't get unstuck")
+                self.color_pub.publish(self.initial_color)
                 return
 
             unstuck = self.stuck_at_state_action()
             if unstuck:
+                self.stuck_times = self.stuck_times + 1
                 self.stuck_at_state = False
                 self.current_state = 'Standby'
                 self.stuck_counter = 0
                 self.counter = 0
                 self.stuck_counter = 0
                 self.last_state = 'Standby'
+                self.color_pub.publish(self.initial_color)
                 return
             self.stuck_counter = self.stuck_counter + 1
             return
@@ -478,7 +505,7 @@ class Logic:
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -6, 6, 0     # Constant approach should result in constant throwing results.
+            moveValues = -4, 4, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
@@ -708,7 +735,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=300, node_rate=myRate, line_detection=True, stuck_activated=False)
+    fb = Logic(min_dist=300, node_rate=myRate, line_detection=True, stuck_activated=True)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
