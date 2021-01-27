@@ -27,9 +27,9 @@ def findBasket(rot):
     """
     rotation = rot
     if rotation > 0:
-        m = np.dot(aKI, np.array([[0], [1.5], [rotation]]))
+        m = np.dot(aKI, np.array([[0], [1.3], [rotation]]))
     else:
-        m = np.dot(aKI, np.array([[0], [-1.5], [rotation]]))
+        m = np.dot(aKI, np.array([[0], [-1.3], [rotation]]))
             
     mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     return mSer
