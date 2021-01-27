@@ -136,10 +136,10 @@ class Logic:
         if state == 'Stuck':
             if 4 > self.stuck_times > 2:
                 if self.initial_color == 'red':
-                    self.color = 'red'
+                    self.color = 'blue'
                     self.color_pub.publish(self.color)
                 else:
-                    self.color = 'blue'
+                    self.color = 'red'
                     self.color_pub.publish(self.color)
 
             if self.stuck_counter > self.stuck_max:  # Couldn't get unstuck
