@@ -184,7 +184,7 @@ class Logic:
                 self.current_state = 'GetToBall'
                 # self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                 # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -193,10 +193,10 @@ class Logic:
             next = self.get_to_ball_action()
             self.stop_thrower()
             if next:
-                self.current_state = 'ImAtBall'
-                # self.current_state = 'Pause'
+                #self.current_state = 'ImAtBall'
+                self.current_state = 'Pause'
                 self.counter = 0
-                # self.stop_wheel()
+                 self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -229,7 +229,7 @@ class Logic:
                 self.current_state = 'Throw'
                 # self.current_state = 'Pause'
                 self.counter = 0
-                self.stop_wheel()
+                # self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -364,7 +364,7 @@ class Logic:
             yP, xP = tcc(self.ball_d, angle)
             if self.ball_d > self.min_ball_dist:  # Not yet near ball
                 moveValues = approachBall(xP, yP)
-                moveValues = moveValues * self.ball_d / 3000
+                # moveValues = moveValues * (self.ball_d / 3000 +50)
                 self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
                 self.move.publish(self.msg)
                 return False    # Continue until near
@@ -735,7 +735,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=350, node_rate=myRate, line_detection=True, stuck_activated=False)
+    fb = Logic(min_dist=350, node_rate=myRate, line_detection=False, stuck_activated=False)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
