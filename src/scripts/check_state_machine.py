@@ -59,7 +59,7 @@ class Logic:
 
         self.detect_line = line_detection
 
-        self.min_ball_dist = min_dist
+        self.ball_dist = [350, 500]
 
         """
         Orientation offsets must follow these conditions:
@@ -349,6 +349,7 @@ class Logic:
                 # rospy.logwarn('DEBUG: Ball Outside court')
                 return
 
+
         angle = calc_angle_cam(self.ball_x)
         if abs(angle) > self.orientation_offset_mov:
             self.current_state = 'FindBall'
@@ -357,6 +358,12 @@ class Logic:
             return
 
         else:   # Ball in sight
+            if self.ball_d < self.ball_dist[0]:  # Too near
+                moveValues = 5, -5, 0
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return False
+
             angle = calc_angle(self.ball_x)
             # logangle = angle * 180 / np.pi
             # rospy.logwarn(logangle)
@@ -379,11 +386,17 @@ class Logic:
 
         ball_angle = calc_angle_cam(self.ball_x)
 
-        if self.ball_d < self.min_ball_dist - self.distance_offset:
-            moveValues = -6, 6, 0     # Constant approach should result in constant throwing results.
+        if self.ball_d < self.ball_dist[0]:
+            moveValues = 6, -6, 0
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
+            return False
 
+        if self.ball_d > self.ball_dist[1]:
+            moveValues = -6, 6, 0
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False
 
         if abs(ball_angle) > self.orientation_offset_rot:
             self.current_state = 'FindBall'
@@ -422,6 +435,18 @@ class Logic:
             self.current_state = 'ImAtBall'
             self.counter = 0
             # rospy.logwarn('DEBUG: Basket lost')
+            return False
+
+        if self.ball_d < self.ball_dist[0]:
+            moveValues = 6, -6, 0
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+            return False
+
+        if self.ball_d > self.ball_dist[1]:
+            moveValues = -6, 6, 0
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
             return False
 
         else:
