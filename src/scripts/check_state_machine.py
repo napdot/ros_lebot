@@ -79,9 +79,9 @@ class Logic:
         self.orientation_offset_pre_throw = 15 * np.pi / 180
         self.orientation_offset_throw_ball = 7 * np.pi / 180
         self.orientation_offset_stuck = 15 * np.pi / 180
-        self.distance_offset = 100
+        self.distance_offset = 50
         self.rate = node_rate
-        self.throw_duration = 2.8   # in seconds
+        self.throw_duration = 3.8   # in seconds
 
         self.rot = 1
 
@@ -193,10 +193,9 @@ class Logic:
             next = self.get_to_ball_action()
             self.stop_thrower()
             if next:
-                #self.current_state = 'ImAtBall'
-                self.current_state = 'Pause'
+                self.current_state = 'ImAtBall'
+                # self.current_state = 'Pause'
                 self.counter = 0
-                 self.stop_wheel()
                 return
             self.counter = self.counter + 1
             return
@@ -380,6 +379,12 @@ class Logic:
 
         ball_angle = calc_angle_cam(self.ball_x)
 
+        if self.ball_d < self.min_ball_dist - self.distance_offset:
+            moveValues = -6, 6, 0     # Constant approach should result in constant throwing results.
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            self.move.publish(self.msg)
+
+
         if abs(ball_angle) > self.orientation_offset_rot:
             self.current_state = 'FindBall'
             self.counter = 0
@@ -494,18 +499,30 @@ class Logic:
             # rospy.logwarn('DEBUG: Basket lost')
             return False
 
-        elif self.throwing_counter >= self.rate * self.throw_duration:   # Termination of throwing
-            self.throwing_counter = 0
+        elif self.throwing_counter >= self.rate * (self.throw_duration * .75):   # Termination of throwing
+            # self.throwing_counter = 0
             self.thrower_msg.t1 = int(0)
             self.throw.publish(self.thrower_msg)
-            return True # Go find a new ball
+            return False # Go find a new ball
+
+        elif self.throwing_counter >= self.rate * (self.throw_duration * .75):
+            self.throwing_counter = 0
+            moveValues = [8, -8, 0]
+            self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+            if self.throwing_counter == (self.rate * self.throw_duration):
+                moveValues = [0, 0, 0]
+                self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
+                self.move.publish(self.msg)
+                return True
+            self.move.publish(self.msg)
+            return False
 
         else:   # Turn on thrower and move forward
             throwerValue = thrower_calculation(self.basket_d)
             self.thrower_msg.t1 = int(throwerValue)
             self.throw.publish(self.thrower_msg)
             self.throwing_counter = self.throwing_counter + 1
-            moveValues = -9, 9, 0     # Constant approach should result in constant throwing results.
+            moveValues = -12, 10, 0     # Constant approach should result in constant throwing results.
             self.msg.w1, self.msg.w2, self.msg.w3 = int(moveValues[0]), int(moveValues[1]), int(moveValues[2])
             self.move.publish(self.msg)
             return False    # Throwing
@@ -735,7 +752,7 @@ if __name__ == '__main__':
     rospy.init_node('state_machine')
     myRate = rospy.get_param('lebot_rate')
     rate = rospy.Rate(myRate)
-    fb = Logic(min_dist=350, node_rate=myRate, line_detection=False, stuck_activated=False)
+    fb = Logic(min_dist=370, node_rate=myRate, line_detection=False, stuck_activated=False)
     fb.current_state = 'Pause'
     while not rospy.is_shutdown():
         fb.execute_state(fb.current_state)
