@@ -11,7 +11,7 @@ When the camera finds the basket, the robot can start approaching the ball to th
 
 aKI = np.array([[-1/np.sqrt(3), -1/3, 1/3], [1/np.sqrt(3), -1/3, 1/3], [0, 2/3, 1/3]]) # Inverse Matrix of Kinetic model
 maxSpeedEnc = 100 # Serial wheels speed [-190, 190] with PID, [-255, 255] without PID
-speedCut = 0.15 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
+speedCut = 0.13 # [%] Percentage of motors "brake". 100% means full speed without reduction from the logic, not recommended nor useful
 
 def findBasket(rot):
     """
@@ -28,10 +28,11 @@ def findBasket(rot):
     rotation = rot
     if rotation > 0:
         m = np.dot(aKI, np.array([[0], [1], [rotation]]))
+        mSer = 0, 0, 9
     else:
         m = np.dot(aKI, np.array([[0], [-1], [rotation]]))
-            
-    mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
+        mSer = 0, 0, -9
+    # mSer = np.rint(np.multiply(np.multiply(np.divide(m, np.max(np.absolute(m))), maxSpeedEnc), speedCut))
     return mSer
 
 """

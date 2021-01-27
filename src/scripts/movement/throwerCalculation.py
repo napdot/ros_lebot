@@ -1,7 +1,7 @@
 
 def thrower_calculation(basket_distance):
     trange = [0, 100]
-    ser = int(basket_distance * 0.01352 + 17.2)
+    ser = int(basket_distance * 0.01352 + 14.72)
     if ser < trange[0]:
         ser = int(23)
     if ser > trange[1]:
