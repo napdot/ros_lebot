@@ -21,7 +21,7 @@ class theRobot:
         # Kinetic Model
         self.aKI = np.array([[-1 / np.sqrt(3), -1 / 3, 1 / 3], [1 / np.sqrt(3), -1 / 3, 1 / 3], [0, 2 / 3, 1 / 3]])
 
-        # Movements available ______________________
+    # Movements available ______________________
 
     def move_manual(self, w1, w2, w3):
         self.publish_wheel(w1, w2, w3)
@@ -260,9 +260,12 @@ class theBasket:
         # Parameters
         self.orientation_offset_pixel = 20
         self.orientation_offset_angle = 10 * np.pi / 180
-        self.min_dist = 400 # in mm
+        self.min_dist = 700 # in mm
         self.distance_power = 0.5 # Lower, means more flexibility at farther distances
         self.angle_score = self.angle_score_calc()
+
+        # Parameters nearness
+        self.near_range = [800, 1700]
 
     def updateValues(self, x, y, d):
         self.x = x
@@ -273,7 +276,19 @@ class theBasket:
         self.isOrientedPixel = self.orientedPixel()
         self.isOrientedAngle = self.orientedAngle()
         self.angle_aki = self.calc_angle()
+        self.isNear = self.near()
         return
+
+    def near(self):
+        if self.isDetected:
+            if self.near_range[0] < self.d < self.near_range[1]:
+                return 0
+            elif self.d > self.near_range[1]:
+                return 1
+            else:
+                return -1
+        else:
+            return False
 
     def inView(self):
         if (self.x == -320 and self.y == 480) or self.d == 0:

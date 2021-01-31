@@ -50,6 +50,12 @@ def do_Initiate():
 
 
 def do_FindBall():
+    global stuck_counter
+    if stuck_counter >= stuck_counter_max:
+        stuck_counter = 0
+        return 'Stuck'
+    stuck_counter = stuck_counter + 1
+
     if Ball.isDetected:
         return 'OrientBall'
     else:   # Rotate and findBall.
@@ -58,6 +64,12 @@ def do_FindBall():
 
 
 def do_OrientBall():
+    global stuck_counter
+    if stuck_counter >= stuck_counter_max:
+        stuck_counter = 0
+        return 'Stuck'
+    stuck_counter = stuck_counter + 1
+
     if Ball.isDetected:
         if not Ball.isOrientedAngle:    # Rotate to ball.
             direction = Ball.isOrientedAngle
@@ -69,12 +81,19 @@ def do_OrientBall():
 
 
 def do_GetToBall():
+    global stuck_counter
+    if stuck_counter >= stuck_counter_max:
+        stuck_counter = 0
+        return 'Stuck'
+    stuck_counter = stuck_counter + 1
+
     if Ball.isDetected:
         if not Ball.isOrientedAngle:
             return 'OrientToBall'
         else:
-            if not Ball.isNear:
-                Robot.move_to(Ball, move_to_ball_speed)
+            if Ball.isNear != 0:
+                direction = Ball.isNear
+                Robot.move_to(Ball, (move_to_ball_speed * direction)
                 return 'GetToBall'
             else:
                 return 'RotateAroundBall'
@@ -83,12 +102,19 @@ def do_GetToBall():
 
 
 def do_RotateAroundBall():
+    global stuck_counter
+    if stuck_counter >= stuck_counter_max:
+        stuck_counter = 0
+        return 'Stuck'
+    stuck_counter = stuck_counter + 1
+
     if Ball.isDetected:
         if not Ball.isOrientedAngle:    # Not oriented to ball
             return 'OrientToBall'
         else:
-            if not Ball.isNear: # Far from Ball
-                Robot.move_to(Ball, move_to_ball_speed)
+            if Ball.isNear != 0:    # Far from Ball
+                direction = Ball.isNear
+                Robot.move_to(Ball, (direction * move_to_ball_speed))
                 return 'GetToBall'
             else:
                 if Basket.isDetected:
@@ -126,6 +152,24 @@ def do_Throw():
         return 'Initiate'
 
 
+def do_Stuck():
+    if not Basket.isDetected:
+        Robot.rotate(find_basket_speed)
+        return 'Stuck'
+    else:
+        if Basket.isOrientedAngle:
+            if Basket.isNear != 0:
+                direction = Basket.isNear
+                Robot.move_to(Basket, (direction * move_to_basket_stuck_speed))
+                return 'Stuck'
+            else:
+                return 'Initiate'
+        else:
+            direction = Basket.isOrientedAngle
+            Robot.rotate(direction * find_basket_speed)
+            return 'Stuck'
+
+
 def execute_routine(cur_routine):
     if cur_routine == 'Pause':
         return do_Pause()
@@ -141,6 +185,9 @@ def execute_routine(cur_routine):
         return do_RotateAroundBall()
     elif cur_routine == 'Throw':
         return do_Throw()
+    elif cur_routine == 'Stuck':
+        return do_Stuck()
+
 
 """
 How to implement.
@@ -152,28 +199,42 @@ theBall and theBasket object has the following properties:
     .angle              Angle from camera midpoint
     .isOrientedPixel    0 if oriented. 1 is to right, 1 is to left, False if not .isDetected
     .isOrientedAngle    0 if oriented. 1 is to right, 1 is to left, False if not .isDetected
-    .isNear             True if near                    
+    .isNear             0 if in the range, 1 is far, -1 is too near, False if not .isDetected                    
 
 """
 
 
 if __name__ == '__main__':
     rospy.init_node('state_machine')
+    # Initialize objects
     Ball = theBall()
     Basket = theBasket()
     Robot = theRobot()
     # Line = theLine()
+
+    # Subscription to update values
     line_subscriber = rospy.Subscriber('/line', LineLocation, line_callback, queue_size=1)
     ball_subscriber = rospy.Subscriber('/ball', Depth_BallLocation, ball_callback, queue_size=1)
     basket_subscriber = rospy.Subscriber('/basket', Depth_BasketLocation, basket_callback, queue_size=1)
     referee_subscriber = rospy.Subscriber('/referee', Ref_Command, referee_callback, queue_size=1)
+
+    # Execution
     routine = 'Pause'
+
+    # Stuck counter
+    stuck_counter = 0
+    stuck_counter_max = 300
+
+    # Throwing counter
     throwing_counter = 0
-    throwing_counter_max = 200
+    throwing_counter_max = 300
+
     # Movement_variables (-1 to 1)
-    find_speed = 0.25
+    find_speed = 0.20
     orient_ball_speed = 0.15
     move_to_ball_speed = 0.18
+    move_to_basket_stuck_speed = 0.24
+    find_basket_speed = 0.16    # Speed at stuck
     rotate_around_ball_speed_normal = 0.18
     rotate_around_ball_speed_slow = 0.1
     move_throw_speed = .24
