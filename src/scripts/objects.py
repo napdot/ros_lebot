@@ -16,6 +16,7 @@ class theRobot:
         # Parameters
         self.max_speed = 100
         self.max_thrower = 100
+        self.min_thrower = 25
 
         # Kinetic Model
         self.aKI = np.array([[-1 / np.sqrt(3), -1 / 3, 1 / 3], [1 / np.sqrt(3), -1 / 3, 1 / 3], [0, 2 / 3, 1 / 3]])
@@ -97,6 +98,23 @@ class theRobot:
             rospy.logwarn('Move to outside magnitude')
             return
 
+    def throw_to(self, object):
+        self.publish_thrower(int(self.thrower_calculation(object.d)))
+
+    def stop_throw(self):
+        self.publish_thrower(int(0))
+
+    def stop_move(self):
+        self.publish_wheel(int(0), int(0), int(0))
+
+    def thrower_calculation(self, dist):
+        ser = int(dist * 0.01352 + 17.2)
+        if ser < self.min_thrower:
+            ser = int(self.min_thrower)
+        if ser > self.max_thrower:
+            ser = int(self.max_thrower - 1)
+        return ser
+
     # Values publishing____________________
 
     def publish_wheel(self, w1, w2, w3):
@@ -112,7 +130,7 @@ class theRobot:
 
     def publish_thrower(self, t1):
         if 0 <= t1 <= self.max_thrower:
-            self.thrower_msg.t1 = t1
+            self.thrower_msg.t1 = int(t1)
             self.throw.publish(self.msg)
             return
         else:
@@ -157,7 +175,7 @@ class theBall:
         self.d = d
         self.isDetected = self.inView()
         self.angle = self.calcAngle()
-        self.isOrientedPixel = orientedPixel()
+        self.isOrientedPixel = self.orientedPixel()
         self.isOrientedAngle = self.orientedAngle()
         self.angle_aki = self.calc_angle()
         return
@@ -215,3 +233,97 @@ class theBall:
         angle = (np.pi / 2) - camera_mid_angle
         return angle
 
+
+class theBasket:
+    def __init__(self):
+        # Ball detected values
+        self.x = -320
+        self.y = 480
+        self.d = 0
+
+        # Camera properties
+        self.camera_hfov = 74
+        self.camera_width = 640
+        self.camera_height = 480
+
+        # Calculated properties
+        self.angle = 0 * np.pi / 180
+        self.isOrientedPixel = False
+        self.isOrientedAngle = False
+        self.isDetected = False
+        self.angle_aki = 0 * np.pi / 180
+        self.isNear = False
+
+        # Options
+        self.angleWithDistance = False
+
+        # Parameters
+        self.orientation_offset_pixel = 20
+        self.orientation_offset_angle = 10 * np.pi / 180
+        self.min_dist = 400 # in mm
+        self.distance_power = 0.5 # Lower, means more flexibility at farther distances
+        self.angle_score = self.angle_score_calc()
+
+    def updateValues(self, x, y, d):
+        self.x = x
+        self.y = y
+        self.d = d
+        self.isDetected = self.inView()
+        self.angle = self.calcAngle()
+        self.isOrientedPixel = self.orientedPixel()
+        self.isOrientedAngle = self.orientedAngle()
+        self.angle_aki = self.calc_angle()
+        return
+
+    def inView(self):
+        if (self.x == -320 and self.y == 480) or self.d == 0:
+            return False
+        else:
+            return True
+
+    def calcAngle(self):
+        # Angle is in radians
+        angle = self.x / (self.camera_width / 2) * (self.camera_hfov / 2) * (3.1415 / 180)
+        return angle
+
+    def orientedPixel(self):
+        if self.isDetected:
+            if -self.orientation_offset_pixel < self.x < self.orientation_offset_pixel:
+                return 0
+            elif self.orientation_offset_pixel < self.x:
+                return 1
+            else:
+                return -1
+        else:
+            return False
+
+    def orientedAngle(self):
+        if self.angleWithDistance:
+            if self.isDetected:
+                if - self.orientation_offset_angle < self.angle_score_calc() < self.orientation_offset_angle:
+                    return 0
+                elif self.angle_score_calc() < self.angle:
+                    return 1
+                else:
+                    return -1
+            else:
+                return False
+        else:
+            if self.isDetected:
+                if - self.orientation_offset_angle < self.angle < self.orientation_offset_angle:
+                    return 0
+                elif self.orientation_offset_angle < self.angle:
+                    return 1
+                else:
+                    return -1
+            else:
+                return False
+
+    def angle_score_calc(self):
+        return (1 / np.power((self.d - self.min_dist), self.distance_power)) * self.angle
+
+    def calc_angle(self):
+        # Angle is in radians
+        camera_mid_angle = self.x / (self.camera_width / 2) * (self.camera_hfov / 2) * (3.1415 / 180)
+        angle = (np.pi / 2) - camera_mid_angle
+        return angle
