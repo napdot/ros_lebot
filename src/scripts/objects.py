@@ -169,16 +169,32 @@ class theBall:
         self.distance_power = 0.5 # Lower, means more flexibility at farther distances
         self.angle_score = self.angle_score_calc()
 
+        # Near parameters
+        self.near_range = [400, 550]
+
     def updateValues(self, x, y, d):
         self.x = x
         self.y = y
         self.d = d
         self.isDetected = self.inView()
         self.angle = self.calcAngle()
+        self.isNear = self.near()
         self.isOrientedPixel = self.orientedPixel()
         self.isOrientedAngle = self.orientedAngle()
         self.angle_aki = self.calc_angle()
+
         return
+
+    def near(self):
+        if self.isDetected:
+            if self.near_range[0] < self.d < self.near_range[1]:
+                return 0
+            elif self.d > self.near_range[1]:
+                return 1
+            else:
+                return -1
+        else:
+            return False
 
     def inView(self):
         if (self.x == -320 and self.y == 480) or self.d == 0:
